@@ -81,8 +81,8 @@ public abstract class Sql {
             return this;
         }
 
-        public <T> Concat add(T... objs) {
-            for (T obj : objs) append(obj);
+        public Concat add(Object... objs) {
+            for (Object obj : objs) append(obj);
             return this;
         }
 
@@ -213,12 +213,12 @@ public abstract class Sql {
             limit = new Concat(src.limit);
         }
 
-        public <T> Select select(T expression) { select.append(expression); return this; }
-        public <T> Select select(T... expressions) { select.add(expressions); return this; }
+        public Select select(Object expression) { select.append(expression); return this; }
+        public Select select(Object... expressions) { select.add(expressions); return this; }
         public Select selectAll() { select.append("*"); return this; }
 
         public Select from(String table) { from.append(table); return this; }
-        public Select from(String... tables) { from.add(tables); return this; }
+        public Select from(String... tables) { from.add((Object[])tables); return this; }
         public Select from(Class<?> clazz) { from.append(clazz.getSimpleName()); return this; }
         public Select from(Class<?>... classes) { for (Class<?> clazz : classes) from.append(clazz.getSimpleName()); return this; }
 
@@ -236,14 +236,14 @@ public abstract class Sql {
         public Select orWhere(String expr, Object... params) { where.or(expr, params); return this; }
         public Select orWhere(Where expr) { where.or(expr); return this; }
 
-        public <T> Select groupBy(T column) { groupBy.append(column); return this; }
-        public <T> Select groupBy(T... columns) { groupBy.add(columns); return this; }
+        public Select groupBy(Object column) { groupBy.append(column); return this; }
+        public Select groupBy(Object... columns) { groupBy.add(columns); return this; }
 
         public Select having(String expr, Object... params) { having.params(params).append(expr); return this; }
         public Select having(Where expr) { having.paramsList(expr.params()).append(expr.toString()); return this; }
 
-        public <T> Select orderBy(T column) { orderBy.append(column); return this; }
-        public <T> Select orderBy(T... columns) { orderBy.add(columns); return this; }
+        public Select orderBy(Object column) { orderBy.append(column); return this; }
+        public Select orderBy(Object... columns) { orderBy.add(columns); return this; }
 
         public Select offset(long start) { offset.append(start); return this; }
         public Select limit(long count) { limit.append(count); return this; }
@@ -303,8 +303,8 @@ public abstract class Sql {
         public Union union(Select expr) { unionSep(" UNION ", expr); return this; }
         public Union unionAll(Select expr) { unionSep(" UNION ALL ", expr); return this; }
 
-        public <T> Union orderBy(T column) { orderBy.append(column); return this; }
-        public <T> Union orderBy(T... columns) { orderBy.add(columns); return this; }
+        public Union orderBy(Object column) { orderBy.append(column); return this; }
+        public Union orderBy(Object... columns) { orderBy.add(columns); return this; }
 
         public Union offset(long start) { offset.append(start); return this; }
         public Union limit(long count) { limit.append(count); return this; }
@@ -345,8 +345,8 @@ public abstract class Sql {
         public Insert into(String table) { into.append(table); return this; }
         public Insert into(Class<?> clazz) { into.append(clazz.getSimpleName()); return this; }
 
-        public <T> Insert column(T column) { columns.append(column); return this; }
-        public <T> Insert columns(T... columns) { this.columns.add(columns); return this; }
+        public Insert column(Object column) { columns.append(column); return this; }
+        public Insert columns(Object... columns) { this.columns.add(columns); return this; }
 
         public Insert defaultValues() { values.prefix("").suffix("").append("DEFAULT VALUES"); return this; }
         public Insert value(String value, Object... params) { values.params(params).append(value); return this; }
@@ -368,8 +368,8 @@ public abstract class Sql {
 
     public static Select select() { return new Select(); }
     public static Select selectAll() { return new Select().selectAll(); }
-    public static <T> Select select(T column) { return new Select().select(column); }
-    public static <T> Select select(T... columns) { return new Select().select(columns); }
+    public static Select select(Object column) { return new Select().select(column); }
+    public static Select select(Object... columns) { return new Select().select(columns); }
 
     public static Select from(String table) { return new Select().from(table); }
     public static Select from(String... tables) { return new Select().from(tables); }
