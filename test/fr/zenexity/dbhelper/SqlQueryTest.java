@@ -1,4 +1,4 @@
-package fr.zenexity.dbhelpers;
+package fr.zenexity.dbhelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;

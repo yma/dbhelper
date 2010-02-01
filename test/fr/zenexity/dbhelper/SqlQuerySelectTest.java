@@ -1,4 +1,4 @@
-package fr.zenexity.dbhelpers;
+package fr.zenexity.dbhelper;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

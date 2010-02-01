@@ -1,4 +1,4 @@
-package fr.zenexity.dbhelpers;
+package fr.zenexity.dbhelper;
 
 import java.io.Closeable;
 import java.sql.ResultSet;
