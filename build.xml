@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="DB Helper" default="build" basedir=".">
+
+    <target name="build" depends="compile">
+	<delete file="dbhelper.jar" />
+        <copy todir="tmp/classes">
+            <fileset dir="src">
+                <include name="**/*.properties"/>
+                <include name="**/*.xml"/>
+            </fileset>
+        </copy>
+        <jar destfile="dbhelper.jar" basedir="tmp/classes">
+        </jar>
+        <delete dir="tmp" />
+    </target>
+
+    <target name="compile">
+        <mkdir dir="tmp/classes" />
+        <javac srcdir="src" destdir="tmp/classes" source="1.5" target="1.5" debug="true" />
+    </target>
+
+</project>
