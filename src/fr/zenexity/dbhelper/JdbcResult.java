@@ -21,15 +21,8 @@ public class JdbcResult {
         T create(ResultSet result) throws SQLException;
     }
 
-    public static <T> Factory<T> buildFactory(Class<T> objectClass) {
-        return buildFactory(objectClass, (List<String>)null);
-    }
 
-    public static <T> Factory<T> buildFactory(Class<T> objectClass, String... fields) {
-        return buildFactory(objectClass, Arrays.asList(fields));
-    }
-
-    public static <T> Factory<T> buildFactory(Class<T> objectClass, List<String> fields) {
+    public static <T> boolean primitive(Class<T> objectClass) {
         return objectClass == String.class
             || objectClass == Integer.class
             || objectClass == Float.class
@@ -38,39 +31,65 @@ public class JdbcResult {
             || objectClass == Short.class
             || objectClass == Byte.class
             || objectClass == Character.class
-            || objectClass == Boolean.class
-                ? new PrimitiveFactory<T>(objectClass, fields)
-                : new ClassFactory<T>(objectClass, fields);
+            || objectClass == Boolean.class;
+    }
+
+    public static <T> Factory<T> buildFactory(Class<T> objectClass) {
+        return primitive(objectClass)
+                ? primitiveFactory(objectClass)
+                : classFactory(objectClass);
+    }
+
+    public static <T> Factory<T> buildFactory(Class<T> objectClass, String... fields) {
+        return primitive(objectClass)
+                ? primitiveFactory(objectClass, fields == null || fields.length == 0 ? null : fields[0])
+                : classFactory(objectClass, fields);
+    }
+
+    public static <T> Factory<T> buildFactory(Class<T> objectClass, List<String> fields) {
+        return primitive(objectClass)
+                ? primitiveFactory(objectClass, fields == null || fields.isEmpty() ? null : fields.get(0))
+                : classFactory(objectClass, fields);
     }
 
 
-
-    public static <T> Factory<T> buildPrimitiveFactory(Class<T> objectClass) {
-        return buildPrimitiveFactory(objectClass, 1);
+    public static <T> PrimitiveFactory<T> primitiveFactory(@SuppressWarnings("unused") Class<T> objectClass) {
+        return new PrimitiveFactory<T>(null);
     }
 
-    public static <T> Factory<T> buildPrimitiveFactory(Class<T> objectClass, int columnIndex) {
-        return new PrimitiveFactory<T>(objectClass, columnIndex);
+    public static <T> PrimitiveFactory<T> primitiveFactory(@SuppressWarnings("unused") Class<T> objectClass, int columnIndex) {
+        return new PrimitiveFactory<T>(columnIndex);
     }
 
-    public static <T> Factory<T> buildPrimitiveFactory(Class<T> objectClass, String field) {
-        return new PrimitiveFactory<T>(objectClass, field);
+    public static <T> PrimitiveFactory<T> primitiveFactory(@SuppressWarnings("unused") Class<T> objectClass, String field) {
+        return new PrimitiveFactory<T>(field);
     }
 
 
-
-    public static <T> Factory<T> buildClassFactory(Class<T> objectClass) {
-        return buildClassFactory(objectClass, (List<String>)null);
+    public static <T> ClassFactory<T> classFactory(Class<T> objectClass) {
+        return new ClassFactory<T>(objectClass, null);
     }
 
-    public static <T> Factory<T> buildClassFactory(Class<T> objectClass, String... fields) {
-        return buildClassFactory(objectClass, Arrays.asList(fields));
+    public static <T> ClassFactory<T> classFactory(Class<T> objectClass, String... fields) {
+        return new ClassFactory<T>(objectClass, Arrays.asList(fields));
     }
 
-    public static <T> Factory<T> buildClassFactory(Class<T> objectClass, List<String> fields) {
+    public static <T> ClassFactory<T> classFactory(Class<T> objectClass, List<String> fields) {
         return new ClassFactory<T>(objectClass, fields);
     }
 
+
+    public static MapFactory mapFactory() {
+        return new MapFactory(null);
+    }
+
+    public static MapFactory mapFactory(String... fields) {
+        return new MapFactory(Arrays.asList(fields));
+    }
+
+    public static MapFactory mapFactory(List<String> fields) {
+        return new MapFactory(fields);
+    }
 
 
     public static class PrimitiveFactory<T> implements Factory<T> {
@@ -78,18 +97,14 @@ public class JdbcResult {
         private final String field;
         private int columnIndex;
 
-        public PrimitiveFactory(Class<T> objectClass, int columnIndex) {
+        public PrimitiveFactory(int columnIndex) {
             this.field = null;
             this.columnIndex = columnIndex;
         }
 
-        public PrimitiveFactory(Class<T> objectClass, String field) {
+        public PrimitiveFactory(String field) {
             this.field = field;
             this.columnIndex = 1;
-        }
-
-        public PrimitiveFactory(Class<T> objectClass, List<String> fields) {
-            this(objectClass, fields == null || fields.isEmpty() ? null : fields.get(0));
         }
 
         public void init(ResultSet result) throws SQLException {
@@ -169,6 +184,71 @@ public class JdbcResult {
                 throw new RuntimeException(ex);
             } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);
+            }
+        }
+
+    }
+
+    public static class MapFactory implements Factory<Map<String, Object>> {
+
+        private List<String> fields;
+        private final Map<String, String> columnInsensitiveFields;
+
+        public MapFactory(List<String> fields) {
+            this.fields = fields;
+            columnInsensitiveFields = new HashMap<String, String>();
+        }
+
+        public void init(ResultSet result) throws SQLException {
+            List<String> columnFields = new ArrayList<String>();
+
+            ResultSetMetaData meta = result.getMetaData();
+            int count = meta.getColumnCount();
+            for (int i = 1; i <= count; i++) {
+                String label = meta.getColumnLabel(i);
+                if (label.length() != 0) {
+                    columnFields.add(label);
+                    if (!meta.isCaseSensitive(i)) columnInsensitiveFields.put(label.toLowerCase(), label);
+                }
+            }
+
+            if (fields == null) fields = columnFields;
+            else {
+                for (int i = 0; i < fields.size(); i++) {
+                    String key = fields.get(i).toLowerCase();
+                    String label = columnInsensitiveFields.get(key);
+                    if (label != null) {
+                        columnInsensitiveFields.put(key, fields.get(i));
+                        fields.set(i, label);
+                    }
+                }
+            }
+        }
+
+        public Map<String, Object> create(ResultSet result) throws SQLException {
+            Map<String, Object> map = new FieldHashMap();
+            for (String field : fields) {
+                Object value = result.getObject(field);
+                if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
+                map.put(field, value);
+            }
+            return map;
+        }
+
+        @SuppressWarnings("serial")
+        private class FieldHashMap extends HashMap<String, Object> {
+            @Override
+            public Object put(String key, Object value) {
+                String insensitiveKey = columnInsensitiveFields.get(key.toLowerCase());
+                if (insensitiveKey != null) key = insensitiveKey;
+                return super.put(key, value);
+            }
+
+            @Override
+            public Object get(Object key) {
+                String insensitiveKey = columnInsensitiveFields.get(key.toString().toLowerCase());
+                if (insensitiveKey != null) key = insensitiveKey;
+                return super.get(key);
             }
         }
 

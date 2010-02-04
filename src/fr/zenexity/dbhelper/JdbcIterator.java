@@ -25,19 +25,6 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         if (this.result != null) this.factory.init(this.result);
     }
 
-    public JdbcIterator(ResultSet result, Class<T> resultClass) throws SQLException {
-        this(result, JdbcResult.buildFactory(resultClass));
-    }
-
-    public JdbcIterator(ResultSet result, Class<T> resultClass, String... fields) throws SQLException {
-        this(result, JdbcResult.buildFactory(resultClass, fields));
-    }
-
-    public JdbcIterator(ResultSet result, Class<T> resultClass, List<String> fields) throws SQLException {
-        this(result, JdbcResult.buildFactory(resultClass, fields));
-    }
-
-
     public void close() {
         if (result != null) {
             try {
@@ -89,6 +76,39 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         List<T> list = new ArrayList<T>();
         for (T row : this) list.add(row);
         return list;
+    }
+
+    public static class Window<T> extends JdbcIterator<T> {
+
+        private int size;
+
+        public Window(ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) throws SQLException {
+            super(result, resultFactory);
+            this.size = size;
+            seek(offset);
+        }
+
+        private void seek(int offset) throws SQLException {
+            if (result != null) {
+                if (offset < 0) {
+                    size += offset;
+                    offset = 0;
+                }
+                if (size > 0) {
+                    if (offset == 0) result.beforeFirst();
+                    else result.absolute(offset);
+                } else close();
+            }
+        }
+
+        @Override
+        protected void load() {
+            if (next == null) {
+                if (size-- > 0) super.load();
+                else close();
+            }
+        }
+
     }
 
 }
