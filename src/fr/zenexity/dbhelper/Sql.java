@@ -366,20 +366,90 @@ public abstract class Sql {
         }
     }
 
+    public static final class Update implements UpdateQuery {
+        private final Concat update;
+        private final ConcatWithParams set;
+        public final Where where;
+        private final Concat orderBy;
+        private final Concat limit;
+
+        public Update() {
+            update = new Concat("UPDATE ", ", ");
+            update.defaultValue(null);
+            set = new ConcatWithParams("SET ", ", ");
+            where = new Where();
+            where.query.prefix("WHERE ").suffix("");
+            orderBy = new Concat("ORDER BY ", ", ");
+            orderBy.defaultValue(null);
+            limit = new Concat("LIMIT ", null);
+        }
+
+        public Update(Update src) {
+            update = new Concat(src.update);
+            set = new ConcatWithParams(src.set);
+            where = new Where(src.where);
+            orderBy = new Concat(src.orderBy);
+            limit = new Concat(src.limit);
+        }
+
+        public Update update(String table) { update.append(table); return this; }
+        public Update update(String... tables) { update.add((Object[])tables); return this; }
+        public Update update(Class<?> clazz) { update.append(clazz.getSimpleName()); return this; }
+        public Update update(Class<?>... classes) { for (Class<?> clazz : classes) update.append(clazz.getSimpleName()); return this; }
+
+        public Update set(String expr, Object... params) { set.params(params).append(expr); return this; }
+
+        public Update where(String expr, Object... params) { return andWhere(expr, params); }
+        public Update where(Where expr) { return andWhere(expr); }
+        public Update andWhere(String expr, Object... params) { where.and(expr, params); return this; }
+        public Update andWhere(Where expr) { where.and(expr); return this; }
+        public Update orWhere(String expr, Object... params) { where.or(expr, params); return this; }
+        public Update orWhere(Where expr) { where.or(expr); return this; }
+
+        public Update orderBy(Object column) { orderBy.append(column); return this; }
+        public Update orderBy(Object... columns) { orderBy.add(columns); return this; }
+
+        public Update limit(long count) { limit.append(count); return this; }
+
+        @Override
+        public String toString() {
+            return new Concat(""," ").defaultValue(null)
+                    .append(update)
+                    .append(set)
+                    .append(where)
+                    .append(orderBy)
+                    .append(limit)
+                    .toString();
+        }
+
+        public List<Object> params() {
+            List<Object> list = new ArrayList<Object>();
+            list.addAll(set.params);
+            list.addAll(where.params());
+            return list;
+        }
+    }
+
     public static Select select() { return new Select(); }
     public static Select selectAll() { return new Select().selectAll(); }
     public static Select select(Object column) { return new Select().select(column); }
     public static Select select(Object... columns) { return new Select().select(columns); }
-
     public static Select from(String table) { return new Select().from(table); }
     public static Select from(String... tables) { return new Select().from(tables); }
     public static Select from(Class<?> clazz) { return new Select().from(clazz); }
     public static Select from(Class<?>... classes) { return new Select().from(classes); }
 
+    public static Union union() { return new Union(); }
     public static Union union(Select expr) { return new Union().union(expr); }
     public static Union unionAll(Select expr) { return new Union().unionAll(expr); }
 
     public static Insert insert() { return new Insert(); }
+
+    public static Update update() { return new Update(); }
+    public static Update update(String table) { return new Update().update(table); }
+    public static Update update(String... tables) { return new Update().update(tables); }
+    public static Update update(Class<?> clazz) { return new Update().update(clazz); }
+    public static Update update(Class<?>... classes) { return new Update().update(classes); }
 
     public static Where where(String expr, Object... params) { return new Where().and(expr, params); }
     public static Where where(Where where) { return new Where().and(where); }
