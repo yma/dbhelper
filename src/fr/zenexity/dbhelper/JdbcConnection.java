@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public class JdbcHelper {
+public class JdbcConnection {
 
     public static PreparedStatement prepareStatement(Connection cnx, String sql) throws SQLException {
         PreparedStatement pst = cnx.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
@@ -55,14 +55,14 @@ public class JdbcHelper {
         return queryList(cnx, query.toString(), query.params());
     }
 
-    public static int execute(Connection cnx, Sql.Update query) throws SQLException {
+    public static int execute(Connection cnx, Sql.UpdateQuery query) throws SQLException {
         return updateList(cnx, query.toString(), query.params());
     }
 
 
     private final Connection cnx;
 
-    public JdbcHelper(Connection cnx) {
+    public JdbcConnection(Connection cnx) {
         this.cnx = cnx;
     }
 
@@ -86,7 +86,7 @@ public class JdbcHelper {
         return execute(cnx, query);
     }
 
-    public int execute(Sql.Update query) throws SQLException {
+    public int execute(Sql.UpdateQuery query) throws SQLException {
         return execute(cnx, query);
     }
 

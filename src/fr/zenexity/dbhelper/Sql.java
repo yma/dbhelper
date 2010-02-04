@@ -166,7 +166,7 @@ public abstract class Sql {
         List<Object> params();
     }
 
-    public interface Update {
+    public interface UpdateQuery {
         @Override String toString();
         List<Object> params();
     }
@@ -324,7 +324,7 @@ public abstract class Sql {
         }
     }
 
-    public static final class Insert implements Update {
+    public static final class Insert implements UpdateQuery {
         private final Concat into;
         private final Concat columns;
         private final ConcatWithParams values;
@@ -383,6 +383,11 @@ public abstract class Sql {
 
     public static Where where(String expr, Object... params) { return new Where().and(expr, params); }
     public static Where where(Where where) { return new Where().and(where); }
+
+    public static Select clone(Select src) { return new Select(src); }
+    public static Union  clone(Union  src) { return new Union (src); }
+    public static Insert clone(Insert src) { return new Insert(src); }
+    public static Where  clone(Where  src) { return new Where (src); }
 
     public static String quote(String str) {
         return "'" + str.replace("'","\\'") + "'";

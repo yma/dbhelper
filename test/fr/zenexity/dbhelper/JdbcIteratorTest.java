@@ -23,7 +23,7 @@ public class JdbcIteratorTest extends TestingDatabase {
 
         Sql.Select query = Sql.selectAll().from(Entry.class);
 
-        for (Entry entry : new JdbcIterator<Entry>(jdbc.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version"))) {
+        for (Entry entry : new JdbcIterator<Entry>(jdbc.connection.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version"))) {
             assertEquals(linux.get(entry.distName), entry.version);
             linux.remove(entry.distName);
         }
@@ -42,7 +42,7 @@ public class JdbcIteratorTest extends TestingDatabase {
 
         Sql.Select query = Sql.selectAll().from(Entry.class);
 
-        for (Entry entry : new JdbcIterator<Entry>(jdbc.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version")).list()) {
+        for (Entry entry : new JdbcIterator<Entry>(jdbc.connection.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version")).list()) {
             assertEquals(linux.get(entry.distName), entry.version);
             linux.remove(entry.distName);
         }
@@ -59,7 +59,7 @@ public class JdbcIteratorTest extends TestingDatabase {
 
         Sql.Select query = Sql.selectAll().from(Entry.class).orderBy("version");
 
-        for (Entry entry : new JdbcIterator.Window<Entry>(jdbc.execute(query), 1, 3, JdbcResult.classFactory(Entry.class, "distName", "version"))) {
+        for (Entry entry : new JdbcIterator.Window<Entry>(jdbc.connection.execute(query), 1, 3, JdbcResult.classFactory(Entry.class, "distName", "version"))) {
             assertEquals(linux.get(entry.distName), entry.version);
             linux.remove(entry.distName);
         }

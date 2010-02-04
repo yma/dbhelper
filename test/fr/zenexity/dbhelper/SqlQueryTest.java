@@ -17,7 +17,7 @@ public class SqlQueryTest extends Assert {
         assertEquals(Arrays.asList(sqlParams), query.params());
     }
 
-    public static void assertEquals(Sql.Update query, String sqlString, Object... sqlParams) {
+    public static void assertEquals(Sql.UpdateQuery query, String sqlString, Object... sqlParams) {
         assertEquals(sqlString, query.toString());
         assertEquals(Arrays.asList(sqlParams), query.params());
     }
