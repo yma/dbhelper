@@ -22,14 +22,41 @@ public class SqlQueryUpdateTest {
 
     @Test
     public void set() {
-        assertEquals("SET x", Sql.update().set("x").toString());
-        assertEquals("SET x, y", Sql.update().set("x").set("y").toString());
+        assertEquals("SET x=?", Sql.update().set("x", 1).toString());
+        assertEquals("SET x=?, y=?", Sql.update().set("x", 1).set("y", 2).toString());
     }
 
     @Test
     public void setParams() {
         assertEquals(Arrays.asList(1), Sql.update().set("x", 1).params());
         assertEquals(Arrays.asList(1, 2), Sql.update().set("x", 1).set("y", 2).params());
+    }
+
+    @Test
+    public void setExpr() {
+        assertEquals("SET x=a", Sql.update().setExpr("x", "a", 1).toString());
+        assertEquals("SET x=a, y=b", Sql.update().setExpr("x", "a", 1).setExpr("y", "b", 2).toString());
+    }
+    @Test
+    public void setExprParams() {
+        assertEquals(Arrays.asList(1), Sql.update().setExpr("x", "a", 1).params());
+        assertEquals(Arrays.asList(1, 2), Sql.update().setExpr("x", "a", 1).setExpr("y", "b", 2).params());
+    }
+
+    @Test
+    public void setFrom() {
+        assertEquals("SET x=?, y=?, z=?", Sql.update().setFrom(new xyz(1,2,3)).toString());
+        assertEquals("SET y=?", Sql.update().setFrom(new xyz(1,2,3), "y").toString());
+        assertEquals("SET x=?, z=?", Sql.update().setFrom(new xyz(1,2,3), "x", "z").toString());
+        assertEquals("SET x=?, y=?, z=?", Sql.update().setFrom(new xyz(1,2,3), "x", "y", "z").toString());
+    }
+
+    @Test
+    public void setFromParams() {
+        assertEquals(Arrays.asList(1, 2, 3), Sql.update().setFrom(new xyz(1,2,3)).params());
+        assertEquals(Arrays.asList(2), Sql.update().setFrom(new xyz(1,2,3), "y").params());
+        assertEquals(Arrays.asList(1, 3), Sql.update().setFrom(new xyz(1,2,3), "x", "z").params());
+        assertEquals(Arrays.asList(1, 2, 3), Sql.update().setFrom(new xyz(1,2,3), "x", "y", "z").params());
     }
 
     @Test
@@ -66,12 +93,21 @@ public class SqlQueryUpdateTest {
 
     @Test
     public void full() {
-        assertEquals("UPDATE x SET y WHERE z ORDER BY 1 LIMIT 2", Sql.update("x").set("y").where("z").orderBy(1).limit(2).toString());
+        assertEquals("UPDATE x SET y=? WHERE z ORDER BY 1 LIMIT 2", Sql.update("x").set("y", 3).where("z").orderBy(1).limit(2).toString());
     }
 
     @Test
     public void fullParams() {
         assertEquals(Arrays.asList(1, 2), Sql.update("x").set("y", 1).where("z", 2).orderBy("a").limit(3).params());
+    }
+
+    public static class xyz {
+        public int x, y, z;
+        public xyz(int x, int y, int z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
     }
 
 }

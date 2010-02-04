@@ -1,5 +1,6 @@
 package fr.zenexity.dbhelper;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -397,7 +398,28 @@ public abstract class Sql {
         public Update update(Class<?> clazz) { update.append(clazz.getSimpleName()); return this; }
         public Update update(Class<?>... classes) { for (Class<?> clazz : classes) update.append(clazz.getSimpleName()); return this; }
 
-        public Update set(String expr, Object... params) { set.params(params).append(expr); return this; }
+        public Update set(String name, Object value) { set.params(value).append(name+"=?"); return this; }
+        public Update setExpr(String name, String expr, Object... params) { set.params(params).append(name+"="+expr); return this; }
+        public Update setFrom(Object obj, String... fields) {
+            Class<?> objClass = obj.getClass();
+
+            if (fields.length == 0) {
+                Field[] objFields = objClass.getDeclaredFields();
+                fields = new String[objFields.length];
+                for (int i = 0; i < objFields.length; i++) {
+                    fields[i] = objFields[i].getName();
+                }
+            }
+
+            for (String field : fields) {
+                try {
+                    set(field, objClass.getDeclaredField(field).get(obj));
+                } catch (IllegalAccessException e) {
+                } catch (NoSuchFieldException e) {
+                }
+            }
+            return this;
+        }
 
         public Update where(String expr, Object... params) { return andWhere(expr, params); }
         public Update where(Where expr) { return andWhere(expr); }
