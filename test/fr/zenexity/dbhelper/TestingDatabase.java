@@ -3,6 +3,7 @@ package fr.zenexity.dbhelper;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import org.junit.After;
 import org.junit.Before;
 
 public class TestingDatabase {
@@ -40,6 +41,11 @@ public class TestingDatabase {
         jdbc.execute(Sql.clone(entry).value("?", "Fedora").value("?", "12"));
         jdbc.execute(Sql.clone(entry).value("?", "Mandriva").value("?", "2010"));
         jdbc.execute(Sql.clone(entry).value("?", "Slackware").value("?", "13.0"));
+    }
+
+    @After
+    public void closeConnection() throws SQLException {
+        jdbc.connection.close();
     }
 
 }

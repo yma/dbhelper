@@ -90,4 +90,8 @@ public class JdbcConnection {
         return execute(cnx, query);
     }
 
+    public void close() throws SQLException {
+        cnx.close();
+    }
+
 }
