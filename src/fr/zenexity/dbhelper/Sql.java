@@ -343,6 +343,8 @@ public abstract class Sql {
             values = new ConcatWithParams(src.values);
         }
 
+        public Insert replace() { into.prefix = "REPLACE INTO "; return this; }
+
         public Insert into(String table) { into.append(table); return this; }
         public Insert into(Class<?> clazz) { into.append(clazz.getSimpleName()); return this; }
 
@@ -466,6 +468,11 @@ public abstract class Sql {
     public static Union unionAll(Select expr) { return new Union().unionAll(expr); }
 
     public static Insert insert() { return new Insert(); }
+    public static Insert insert(String table) { return new Insert().into(table); }
+    public static Insert insert(Class<?> clazz) { return new Insert().into(clazz); }
+    public static Insert replace() { return new Insert().replace(); }
+    public static Insert replace(String table) { return new Insert().replace().into(table); }
+    public static Insert replace(Class<?> clazz) { return new Insert().replace().into(clazz); }
 
     public static Update update() { return new Update(); }
     public static Update update(String table) { return new Update().update(table); }

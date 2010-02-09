@@ -17,6 +17,13 @@ public class SqlQueryInsertTest {
     }
 
     @Test
+    public void basicReplace() {
+        assertEquals("REPLACE INTO x (y)", Sql.replace().into("x").column("y").toString());
+        assertEquals("REPLACE INTO x (y, z)", Sql.replace().into("x").column("y").column("z").toString());
+        assertEquals("REPLACE INTO x (y, z)", Sql.replace().into("x").columns("y", "z").toString());
+    }
+
+    @Test
     public void defaultValues() {
         assertEquals("INSERT INTO x (y) DEFAULT VALUES", Sql.insert().into("x").column("y").defaultValues().toString());
     }
