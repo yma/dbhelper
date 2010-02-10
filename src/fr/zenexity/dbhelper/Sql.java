@@ -3,6 +3,7 @@ package fr.zenexity.dbhelper;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class Sql {
 
@@ -360,6 +361,41 @@ public abstract class Sql {
         public Insert set(String column, Object value) { return column(column).value(value); }
         public Insert setExpr(String column, String value, Object params) { return column(column).valueExpr(value, params); }
 
+        public Insert setFrom(Object obj) {
+            Class<?> objClass = obj.getClass();
+            Field[] objFields = objClass.getDeclaredFields();
+            for (Field objField : objFields) {
+                try {
+                    set(objField.getName(), objField.get(obj));
+                } catch (IllegalArgumentException e) {
+                } catch (IllegalAccessException e) {
+                }
+            }
+            return this;
+        }
+
+        public Insert setFrom(Object obj, String... fields) {
+            Class<?> objClass = obj.getClass();
+            for (String field : fields) {
+                try {
+                    set(field, objClass.getDeclaredField(field).get(obj));
+                } catch (IllegalAccessException e) {
+                } catch (NoSuchFieldException e) {
+                }
+            }
+            return this;
+        }
+
+        public Insert setFromMap(Map<String,?> map) {
+            for (Map.Entry<String,?> entry : map.entrySet()) set(entry.getKey(), entry.getValue());
+            return this;
+        }
+
+        public Insert setFromMap(Map<String,?> map, String... fields) {
+            for (String field : fields) set(field, map.get(field));
+            return this;
+        }
+
         @Override
         public String toString() {
             return new Concat(""," ").defaultValue(null)
@@ -407,17 +443,22 @@ public abstract class Sql {
 
         public Update set(String name, Object value) { set.params(value).append(name+"=?"); return this; }
         public Update setExpr(String name, String expr, Object... params) { set.params(params).append(name+"="+expr); return this; }
-        public Update setFrom(Object obj, String... fields) {
-            Class<?> objClass = obj.getClass();
 
-            if (fields.length == 0) {
-                Field[] objFields = objClass.getDeclaredFields();
-                fields = new String[objFields.length];
-                for (int i = 0; i < objFields.length; i++) {
-                    fields[i] = objFields[i].getName();
+        public Update setFrom(Object obj) {
+            Class<?> objClass = obj.getClass();
+            Field[] objFields = objClass.getDeclaredFields();
+            for (Field objField : objFields) {
+                try {
+                    set(objField.getName(), objField.get(obj));
+                } catch (IllegalArgumentException e) {
+                } catch (IllegalAccessException e) {
                 }
             }
+            return this;
+        }
 
+        public Update setFrom(Object obj, String... fields) {
+            Class<?> objClass = obj.getClass();
             for (String field : fields) {
                 try {
                     set(field, objClass.getDeclaredField(field).get(obj));
@@ -425,6 +466,16 @@ public abstract class Sql {
                 } catch (NoSuchFieldException e) {
                 }
             }
+            return this;
+        }
+
+        public Update setFromMap(Map<String,?> map) {
+            for (Map.Entry<String,?> entry : map.entrySet()) set(entry.getKey(), entry.getValue());
+            return this;
+        }
+
+        public Update setFromMap(Map<String,?> map, String... fields) {
+            for (String field : fields) set(field, map.get(field));
             return this;
         }
 

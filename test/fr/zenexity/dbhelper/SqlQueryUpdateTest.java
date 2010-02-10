@@ -1,6 +1,7 @@
 package fr.zenexity.dbhelper;
 
-import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -22,47 +23,40 @@ public class SqlQueryUpdateTest {
 
     @Test
     public void set() {
-        assertEquals("SET x=?", Sql.update().set("x", 1).toString());
-        assertEquals("SET x=?, y=?", Sql.update().set("x", 1).set("y", 2).toString());
-    }
-
-    @Test
-    public void setParams() {
-        assertEquals(Arrays.asList(1), Sql.update().set("x", 1).params());
-        assertEquals(Arrays.asList(1, 2), Sql.update().set("x", 1).set("y", 2).params());
+        SqlQueryTest.assertEquals(Sql.update().set("x", 1), "SET x=?", 1);
+        SqlQueryTest.assertEquals(Sql.update().set("x", 1).set("y", 2), "SET x=?, y=?", 1, 2);
     }
 
     @Test
     public void setExpr() {
-        assertEquals("SET x=a", Sql.update().setExpr("x", "a", 1).toString());
-        assertEquals("SET x=a, y=b", Sql.update().setExpr("x", "a", 1).setExpr("y", "b", 2).toString());
-    }
-    @Test
-    public void setExprParams() {
-        assertEquals(Arrays.asList(1), Sql.update().setExpr("x", "a", 1).params());
-        assertEquals(Arrays.asList(1, 2), Sql.update().setExpr("x", "a", 1).setExpr("y", "b", 2).params());
+        SqlQueryTest.assertEquals(Sql.update().setExpr("x", "a", 1), "SET x=a", 1);
+        SqlQueryTest.assertEquals(Sql.update().setExpr("x", "a", 1).setExpr("y", "b", 2), "SET x=a, y=b", 1, 2);
     }
 
     @Test
     public void setFrom() {
-        assertEquals("SET x=?, y=?, z=?", Sql.update().setFrom(new xyz(1,2,3)).toString());
-        assertEquals("SET y=?", Sql.update().setFrom(new xyz(1,2,3), "y").toString());
-        assertEquals("SET x=?, z=?", Sql.update().setFrom(new xyz(1,2,3), "x", "z").toString());
-        assertEquals("SET x=?, y=?, z=?", Sql.update().setFrom(new xyz(1,2,3), "x", "y", "z").toString());
+        SqlQueryTest.assertEquals(Sql.update().setFrom(new xyz(1,2,3)), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlQueryTest.assertEquals(Sql.update().setFrom(new xyz(1,2,3), "y"), "SET y=?", 2);
+        SqlQueryTest.assertEquals(Sql.update().setFrom(new xyz(1,2,3), "x", "z"), "SET x=?, z=?", 1, 3);
+        SqlQueryTest.assertEquals(Sql.update().setFrom(new xyz(1,2,3), "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
     }
 
     @Test
-    public void setFromParams() {
-        assertEquals(Arrays.asList(1, 2, 3), Sql.update().setFrom(new xyz(1,2,3)).params());
-        assertEquals(Arrays.asList(2), Sql.update().setFrom(new xyz(1,2,3), "y").params());
-        assertEquals(Arrays.asList(1, 3), Sql.update().setFrom(new xyz(1,2,3), "x", "z").params());
-        assertEquals(Arrays.asList(1, 2, 3), Sql.update().setFrom(new xyz(1,2,3), "x", "y", "z").params());
+    public void setFromMap() {
+        Map<String, Integer> map = new LinkedHashMap<String, Integer>();
+        map.put("x", 1);
+        map.put("y", 2);
+        map.put("z", 3);
+        SqlQueryTest.assertEquals(Sql.update().setFromMap(map), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlQueryTest.assertEquals(Sql.update().setFromMap(map, "y"), "SET y=?", 2);
+        SqlQueryTest.assertEquals(Sql.update().setFromMap(map, "x", "z"), "SET x=?, z=?", 1, 3);
+        SqlQueryTest.assertEquals(Sql.update().setFromMap(map, "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
     }
 
     @Test
     public void where() {
-        assertEquals("WHERE x", Sql.update().where("x").toString());
-        assertEquals("WHERE x AND y", Sql.update().where("x").andWhere("y").toString());
+        SqlQueryTest.assertEquals(Sql.update().where("x", 1), "WHERE x", 1);
+        SqlQueryTest.assertEquals(Sql.update().where("x", 1).andWhere("y", 2), "WHERE x AND y", 1, 2);
         assertEquals("WHERE x OR y", Sql.update().where("x").orWhere("y").toString());
     }
 
@@ -71,12 +65,6 @@ public class SqlQueryUpdateTest {
         assertEquals("WHERE (x)", Sql.update().where(Sql.where("x")).toString());
         assertEquals("WHERE (x) AND (y)", Sql.update().where(Sql.where("x")).andWhere(Sql.where("y")).toString());
         assertEquals("WHERE (x) OR (y)", Sql.update().where(Sql.where("x")).orWhere(Sql.where("y")).toString());
-    }
-
-    @Test
-    public void whereParams() {
-        assertEquals(Arrays.asList(1), Sql.update().where("x", 1).params());
-        assertEquals(Arrays.asList(1, 2), Sql.update().where("x", 1).andWhere("y", 2).params());
     }
 
     @Test
@@ -93,12 +81,8 @@ public class SqlQueryUpdateTest {
 
     @Test
     public void full() {
-        assertEquals("UPDATE x SET y=? WHERE z ORDER BY 1 LIMIT 2", Sql.update("x").set("y", 3).where("z").orderBy(1).limit(2).toString());
-    }
-
-    @Test
-    public void fullParams() {
-        assertEquals(Arrays.asList(1, 2), Sql.update("x").set("y", 1).where("z", 2).orderBy("a").limit(3).params());
+        SqlQueryTest.assertEquals(Sql.update("x").set("y", 3).where("z", 4).orderBy(1).limit(2),
+                "UPDATE x SET y=? WHERE z ORDER BY 1 LIMIT 2", 3, 4);
     }
 
     public static class xyz {

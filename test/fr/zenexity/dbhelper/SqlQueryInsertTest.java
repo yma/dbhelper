@@ -1,5 +1,8 @@
 package fr.zenexity.dbhelper;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -88,11 +91,40 @@ public class SqlQueryInsertTest {
     }
 
     @Test
+    public void setFrom() {
+        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3)), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3), "y"), "(y) VALUES (?)", 2);
+        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3), "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
+        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3), "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+    }
+
+    @Test
+    public void setFromMap() {
+        Map<String, Integer> map = new LinkedHashMap<String, Integer>();
+        map.put("x", 1);
+        map.put("y", 2);
+        map.put("z", 3);
+        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map, "y"), "(y) VALUES (?)", 2);
+        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map, "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
+        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map, "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+    }
+
+    @Test
     public void testToString() {
         assertEquals("INSERT INTO t (c) VALUES (x)", Sql.insert("t").column("c").valueExpr("x").toString());
         assertEquals("INSERT INTO t (c) DEFAULT VALUES", Sql.insert("t").column("c").defaultValues().toString());
         assertEquals("INSERT INTO t (c) SELECT x", Sql.insert("t").column("c").select(Sql.select("x")).toString());
         SqlQueryTest.assertEquals(Sql.insert("t").set("c", "x"), "INSERT INTO t (c) VALUES (?)", "x");
+    }
+
+    public static class xyz {
+        public int x, y, z;
+        public xyz(int x, int y, int z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
     }
 
 }
