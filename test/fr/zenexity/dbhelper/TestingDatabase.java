@@ -36,11 +36,11 @@ public class TestingDatabase {
         jdbc.connection.update("DELETE FROM Entry");
         Sql.Insert entry = Sql.insert().into(Entry.class).columns("distName", "version");
 
-        jdbc.execute(Sql.clone(entry).value("?", "Debian").value("?", "5.0"));
-        jdbc.execute(Sql.clone(entry).value("?", "Ubuntu").value("?", "9.10"));
-        jdbc.execute(Sql.clone(entry).value("?", "Fedora").value("?", "12"));
-        jdbc.execute(Sql.clone(entry).value("?", "Mandriva").value("?", "2010"));
-        jdbc.execute(Sql.clone(entry).value("?", "Slackware").value("?", "13.0"));
+        jdbc.execute(Sql.clone(entry).values("Debian", "5.0"));
+        jdbc.execute(Sql.clone(entry).values("Ubuntu", "9.10"));
+        jdbc.execute(Sql.clone(entry).values("Fedora", "12"));
+        jdbc.execute(Sql.clone(entry).values("Mandriva", "2010"));
+        jdbc.execute(Sql.clone(entry).values("Slackware", "13.0"));
     }
 
     @After

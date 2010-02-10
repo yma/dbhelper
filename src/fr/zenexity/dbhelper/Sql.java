@@ -351,9 +351,14 @@ public abstract class Sql {
         public Insert column(Object column) { columns.append(column); return this; }
         public Insert columns(Object... columns) { this.columns.add(columns); return this; }
 
-        public Insert defaultValues() { values.prefix("").suffix("").append("DEFAULT VALUES"); return this; }
-        public Insert value(String value, Object... params) { values.params(params).append(value); return this; }
+        public Insert defaultValues() { values.prefix("").suffix("").separator(null).append("DEFAULT VALUES"); return this; }
         public Insert select(Select values) { this.values.paramsList(values.params()).prefix("").suffix("").separator(null).append(values.toString()); return this; }
+        public Insert valueExpr(String value, Object... params) { values.params(params).append(value); return this; }
+        public Insert value(Object value) { return valueExpr("?", value); }
+        public Insert values(Object... values) { for (Object value : values) value(value); return this; }
+
+        public Insert set(String column, Object value) { return column(column).value(value); }
+        public Insert setExpr(String column, String value, Object params) { return column(column).valueExpr(value, params); }
 
         @Override
         public String toString() {

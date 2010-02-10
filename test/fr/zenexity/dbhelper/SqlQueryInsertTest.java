@@ -10,43 +10,89 @@ import static org.junit.Assert.*;
 public class SqlQueryInsertTest {
 
     @Test
-    public void basic() {
-        assertEquals("INSERT INTO x (y)", Sql.insert().into("x").column("y").toString());
-        assertEquals("INSERT INTO x (y, z)", Sql.insert().into("x").column("y").column("z").toString());
-        assertEquals("INSERT INTO x (y, z)", Sql.insert().into("x").columns("y", "z").toString());
+    public void testInsertInto() {
+        assertEquals("", Sql.insert().toString());
+        assertEquals("INSERT INTO x", Sql.insert("x").toString());
+        assertEquals("INSERT INTO SqlQueryInsertTest", Sql.insert(SqlQueryInsertTest.class).toString());
     }
 
     @Test
-    public void basicReplace() {
-        assertEquals("REPLACE INTO x (y)", Sql.replace().into("x").column("y").toString());
-        assertEquals("REPLACE INTO x (y, z)", Sql.replace().into("x").column("y").column("z").toString());
-        assertEquals("REPLACE INTO x (y, z)", Sql.replace().into("x").columns("y", "z").toString());
+    public void testReplace() {
+        assertEquals("", Sql.replace().toString());
+        assertEquals("REPLACE INTO x", Sql.replace("x").toString());
+        assertEquals("REPLACE INTO SqlQueryInsertTest", Sql.replace(SqlQueryInsertTest.class).toString());
     }
 
     @Test
-    public void defaultValues() {
-        assertEquals("INSERT INTO x (y) DEFAULT VALUES", Sql.insert().into("x").column("y").defaultValues().toString());
+    public void testColumns() {
+        assertEquals("(y)", Sql.insert().column("y").toString());
+        assertEquals("(y, z)", Sql.insert().column("y").column("z").toString());
+        assertEquals("(y, z)", Sql.insert().columns("y", "z").toString());
     }
 
     @Test
-    public void values() {
-        SqlQueryTest.assertEquals(Sql.insert().into("x").value("y", 1, 2, 3), "INSERT INTO x VALUES (y)", 1, 2, 3);
-        SqlQueryTest.assertEquals(Sql.insert().into("x").value("y", 1, 2).value("z", 3, 4), "INSERT INTO x VALUES (y, z)", 1, 2, 3, 4);
-    }
-
-    @Test
-    public void select() {
-        SqlQueryTest.assertEquals(Sql.insert().into("x").select(Sql.select("y").where("z", 1, 2, 3)), "INSERT INTO x SELECT y WHERE z", 1, 2, 3);
+    public void testDefaultValues() {
+        assertEquals("DEFAULT VALUES", Sql.insert().defaultValues().toString());
     }
 
     @Test(expected=NullPointerException.class)
-    public void valueError() {
-        Sql.insert().into("x").value("ok").select(Sql.select("y").where("z"));
+    public void testDefaultValuesNPE1() {
+        Sql.insert().value(1).defaultValues().toString();
     }
 
     @Test(expected=NullPointerException.class)
-    public void selectError() {
-        Sql.insert().into("x").select(Sql.select("y").where("z")).value("error");
+    public void testDefaultValuesNPE2() {
+        Sql.insert().defaultValues().value(1).toString();
+    }
+
+    @Test
+    public void testSelect() {
+        SqlQueryTest.assertEquals(Sql.insert().select(Sql.select().where("x", 1)), "x", 1);
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testSelectNPE1() {
+        Sql.insert().value(1).select(Sql.select()).toString();
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void testSelectNPE2() {
+        Sql.insert().select(Sql.select("x")).value(1).toString();
+    }
+
+    @Test
+    public void testValueExpr() {
+        assertEquals("VALUES (x)", Sql.insert().valueExpr("x").toString());
+        assertEquals("VALUES (x, y)", Sql.insert().valueExpr("x").valueExpr("y").toString());
+        SqlQueryTest.assertEquals(Sql.insert().valueExpr("x", 1).valueExpr("y", 2), "VALUES (x, y)", 1, 2);
+        SqlQueryTest.assertEquals(Sql.insert().valueExpr("x", 1, 2).valueExpr("y", 3, 4), "VALUES (x, y)", 1, 2, 3, 4);
+    }
+
+    @Test
+    public void testValues() {
+        SqlQueryTest.assertEquals(Sql.insert().value("x"), "VALUES (?)", "x");
+        SqlQueryTest.assertEquals(Sql.insert().value("x").value("y"), "VALUES (?, ?)", "x", "y");
+        SqlQueryTest.assertEquals(Sql.insert().values("x", "y"), "VALUES (?, ?)", "x", "y");
+    }
+
+    @Test
+    public void testSet() {
+        SqlQueryTest.assertEquals(Sql.insert().set("x", 1), "(x) VALUES (?)", 1);
+        SqlQueryTest.assertEquals(Sql.insert().set("x", 1).set("y", 2), "(x, y) VALUES (?, ?)", 1, 2);
+    }
+
+    @Test
+    public void testSetExpr() {
+        SqlQueryTest.assertEquals(Sql.insert().setExpr("c1", "x", 1), "(c1) VALUES (x)", 1);
+        SqlQueryTest.assertEquals(Sql.insert().setExpr("c1", "x", 1).setExpr("c2", "y", 2), "(c1, c2) VALUES (x, y)", 1, 2);
+    }
+
+    @Test
+    public void testToString() {
+        assertEquals("INSERT INTO t (c) VALUES (x)", Sql.insert("t").column("c").valueExpr("x").toString());
+        assertEquals("INSERT INTO t (c) DEFAULT VALUES", Sql.insert("t").column("c").defaultValues().toString());
+        assertEquals("INSERT INTO t (c) SELECT x", Sql.insert("t").column("c").select(Sql.select("x")).toString());
+        SqlQueryTest.assertEquals(Sql.insert("t").set("c", "x"), "INSERT INTO t (c) VALUES (?)", "x");
     }
 
 }
