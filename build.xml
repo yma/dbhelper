@@ -2,22 +2,42 @@
 
 <project name="DB Helper" default="build" basedir=".">
 
-    <target name="build" depends="compile">
-	<delete file="dbhelper.jar" />
+    <target name="build">
+        <antcall target="make-jar">
+            <param name="filename" value="dbhelper.jar" />
+        </antcall>
+    </target>
+
+    <target name="build-with-sources" depends="compile-with-sources">
+        <antcall target="make-jar">
+            <param name="filename" value="dbhelper-with-sources.jar" />
+        </antcall>
+    </target>
+
+    <target name="make-jar" depends="compile">
+	<delete file="${filename}" />
         <copy todir="tmp/classes">
             <fileset dir="src">
                 <include name="**/*.properties"/>
                 <include name="**/*.xml"/>
             </fileset>
         </copy>
-        <jar destfile="dbhelper.jar" basedir="tmp/classes">
+        <jar destfile="${filename}" basedir="tmp/classes">
         </jar>
         <delete dir="tmp" />
     </target>
 
+    <target name="compile-with-sources" depends="compile">
+        <copy todir="tmp/classes">
+            <fileset dir="src">
+                <include name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+
     <target name="compile">
         <mkdir dir="tmp/classes" />
-        <javac srcdir="src" destdir="tmp/classes" source="1.5" target="1.5" debug="true" />
+        <javac srcdir="src" destdir="tmp/classes" debug="true" />
     </target>
 
 </project>
