@@ -94,8 +94,8 @@ public class SqlQuerySelectTest {
 
     @Test
     public void where() {
-        SqlQueryTest.assertEquals(Sql.select().where("x", 1, 2, 3), "x", 1, 2, 3);
-        SqlQueryTest.assertEquals(Sql.select().where("x", 1, 2, 3).where("y", 4, 5, 6), "x AND y", 1, 2, 3, 4, 5, 6);
+        SqlQueryTest.assertQuery(Sql.select().where("x", 1, 2, 3), "x", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.select().where("x", 1, 2, 3).where("y", 4, 5, 6), "x AND y", 1, 2, 3, 4, 5, 6);
         assertEquals("FROM i WHERE x", Sql.select().from("i").where("x").toString());
         assertEquals("FROM i WHERE x AND y", Sql.select().from("i").where("x").where("y").toString());
         assertEquals("SELECT i FROM j WHERE x", Sql.select().select("i").from("j").where("x").toString());
@@ -103,8 +103,8 @@ public class SqlQuerySelectTest {
 
     @Test
     public void andWhere() {
-        SqlQueryTest.assertEquals(Sql.select().andWhere("x", 1, 2, 3), "x", 1, 2, 3);
-        SqlQueryTest.assertEquals(Sql.select().andWhere("x", 1, 2, 3).andWhere("y", 4, 5, 6), "x AND y", 1, 2, 3, 4, 5, 6);
+        SqlQueryTest.assertQuery(Sql.select().andWhere("x", 1, 2, 3), "x", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.select().andWhere("x", 1, 2, 3).andWhere("y", 4, 5, 6), "x AND y", 1, 2, 3, 4, 5, 6);
         assertEquals("FROM i WHERE x", Sql.select().from("i").andWhere("x").toString());
         assertEquals("FROM i WHERE x AND y", Sql.select().from("i").andWhere("x").andWhere("y").toString());
         assertEquals("SELECT i FROM j WHERE x", Sql.select().select("i").from("j").andWhere("x").toString());
@@ -112,8 +112,8 @@ public class SqlQuerySelectTest {
 
     @Test
     public void orWhere() {
-        SqlQueryTest.assertEquals(Sql.select().orWhere("x", 1, 2, 3), "x", 1, 2, 3);
-        SqlQueryTest.assertEquals(Sql.select().orWhere("x", 1, 2, 3).orWhere("y", 4, 5, 6), "x OR y", 1, 2, 3, 4, 5, 6);
+        SqlQueryTest.assertQuery(Sql.select().orWhere("x", 1, 2, 3), "x", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.select().orWhere("x", 1, 2, 3).orWhere("y", 4, 5, 6), "x OR y", 1, 2, 3, 4, 5, 6);
         assertEquals("FROM i WHERE x", Sql.select().from("i").orWhere("x").toString());
         assertEquals("FROM i WHERE x OR y", Sql.select().from("i").orWhere("x").orWhere("y").toString());
         assertEquals("SELECT i WHERE x", Sql.select().select("i").orWhere("x").toString());
@@ -132,8 +132,8 @@ public class SqlQuerySelectTest {
     public void having() {
         assertEquals("HAVING x", Sql.select().having("x").toString());
         assertEquals("HAVING x, y", Sql.select().having("x").having("y").toString());
-        SqlQueryTest.assertEquals(Sql.select().having("x", 1, 2, 3), "HAVING x", 1, 2, 3);
-        SqlQueryTest.assertEquals(Sql.select().having(Sql.where("x", 1, 2, 3)), "HAVING (x)", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.select().having("x", 1, 2, 3), "HAVING x", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.select().having(Sql.where("x", 1, 2, 3)), "HAVING (x)", 1, 2, 3);
     }
 
     @Test
@@ -166,7 +166,7 @@ public class SqlQuerySelectTest {
 
     @Test
     public void params() {
-        SqlQueryTest.assertEquals(Sql.select()
+        SqlQueryTest.assertQuery(Sql.select()
                     .andWhere("f", 6, "f")
                     .orWhere("g", 7, "g")
                     .join("c", 3, "c")

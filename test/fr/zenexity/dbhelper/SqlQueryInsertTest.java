@@ -50,7 +50,7 @@ public class SqlQueryInsertTest {
 
     @Test
     public void testSelect() {
-        SqlQueryTest.assertEquals(Sql.insert().select(Sql.select().where("x", 1)), "x", 1);
+        SqlQueryTest.assertQuery(Sql.insert().select(Sql.select().where("x", 1)), "x", 1);
     }
 
     @Test(expected=NullPointerException.class)
@@ -67,47 +67,47 @@ public class SqlQueryInsertTest {
     public void testValueExpr() {
         assertEquals("VALUES (x)", Sql.insert().valueExpr("x").toString());
         assertEquals("VALUES (x, y)", Sql.insert().valueExpr("x").valueExpr("y").toString());
-        SqlQueryTest.assertEquals(Sql.insert().valueExpr("x", 1).valueExpr("y", 2), "VALUES (x, y)", 1, 2);
-        SqlQueryTest.assertEquals(Sql.insert().valueExpr("x", 1, 2).valueExpr("y", 3, 4), "VALUES (x, y)", 1, 2, 3, 4);
+        SqlQueryTest.assertQuery(Sql.insert().valueExpr("x", 1).valueExpr("y", 2), "VALUES (x, y)", 1, 2);
+        SqlQueryTest.assertQuery(Sql.insert().valueExpr("x", 1, 2).valueExpr("y", 3, 4), "VALUES (x, y)", 1, 2, 3, 4);
     }
 
     @Test
     public void testValues() {
-        SqlQueryTest.assertEquals(Sql.insert().value("x"), "VALUES (?)", "x");
-        SqlQueryTest.assertEquals(Sql.insert().value("x").value("y"), "VALUES (?, ?)", "x", "y");
-        SqlQueryTest.assertEquals(Sql.insert().values("x", "y"), "VALUES (?, ?)", "x", "y");
+        SqlQueryTest.assertQuery(Sql.insert().value("x"), "VALUES (?)", "x");
+        SqlQueryTest.assertQuery(Sql.insert().value("x").value("y"), "VALUES (?, ?)", "x", "y");
+        SqlQueryTest.assertQuery(Sql.insert().values("x", "y"), "VALUES (?, ?)", "x", "y");
     }
 
     @Test
     public void testSet() {
-        SqlQueryTest.assertEquals(Sql.insert().set("x", 1), "(x) VALUES (?)", 1);
-        SqlQueryTest.assertEquals(Sql.insert().set("x", 1).set("y", 2), "(x, y) VALUES (?, ?)", 1, 2);
+        SqlQueryTest.assertQuery(Sql.insert().set("x", 1), "(x) VALUES (?)", 1);
+        SqlQueryTest.assertQuery(Sql.insert().set("x", 1).set("y", 2), "(x, y) VALUES (?, ?)", 1, 2);
     }
 
     @Test
     public void testSetExpr() {
-        SqlQueryTest.assertEquals(Sql.insert().setExpr("c1", "x", 1), "(c1) VALUES (x)", 1);
-        SqlQueryTest.assertEquals(Sql.insert().setExpr("c1", "x", 1).setExpr("c2", "y", 2), "(c1, c2) VALUES (x, y)", 1, 2);
+        SqlQueryTest.assertQuery(Sql.insert().setExpr("c1", "x", 1), "(c1) VALUES (x)", 1);
+        SqlQueryTest.assertQuery(Sql.insert().setExpr("c1", "x", 1).setExpr("c2", "y", 2), "(c1, c2) VALUES (x, y)", 1, 2);
     }
 
     @Test
-    public void setFrom() {
-        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3)), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
-        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3), "y"), "(y) VALUES (?)", 2);
-        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3), "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
-        SqlQueryTest.assertEquals(Sql.insert().setFrom(new xyz(1,2,3), "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+    public void testObject() {
+        SqlQueryTest.assertQuery(Sql.insert().object(new xyz(1,2,3)), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.insert().object(new xyz(1,2,3), "y"), "(y) VALUES (?)", 2);
+        SqlQueryTest.assertQuery(Sql.insert().object(new xyz(1,2,3), "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
+        SqlQueryTest.assertQuery(Sql.insert().object(new xyz(1,2,3), "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
     }
 
     @Test
-    public void setFromMap() {
+    public void testMap() {
         Map<String, Integer> map = new LinkedHashMap<String, Integer>();
         map.put("x", 1);
         map.put("y", 2);
         map.put("z", 3);
-        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
-        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map, "y"), "(y) VALUES (?)", 2);
-        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map, "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
-        SqlQueryTest.assertEquals(Sql.insert().setFromMap(map, "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.insert().map(map), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+        SqlQueryTest.assertQuery(Sql.insert().map(map, "y"), "(y) VALUES (?)", 2);
+        SqlQueryTest.assertQuery(Sql.insert().map(map, "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
+        SqlQueryTest.assertQuery(Sql.insert().map(map, "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class SqlQueryInsertTest {
         assertEquals("INSERT INTO t (c) VALUES (x)", Sql.insert("t").column("c").valueExpr("x").toString());
         assertEquals("INSERT INTO t (c) DEFAULT VALUES", Sql.insert("t").column("c").defaultValues().toString());
         assertEquals("INSERT INTO t (c) SELECT x", Sql.insert("t").column("c").select(Sql.select("x")).toString());
-        SqlQueryTest.assertEquals(Sql.insert("t").set("c", "x"), "INSERT INTO t (c) VALUES (?)", "x");
+        SqlQueryTest.assertQuery(Sql.insert("t").set("c", "x"), "INSERT INTO t (c) VALUES (?)", "x");
     }
 
     public static class xyz {

@@ -1,23 +1,24 @@
 package fr.zenexity.dbhelper;
 
+import static org.junit.Assert.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
-import org.junit.Assert;
 
 /**
  *
  * @author yma
  */
-public class SqlQueryTest extends Assert {
+public class SqlQueryTest {
 
-    public static void assertEquals(Sql.Query query, String sqlString, Object... sqlParams) {
+    public static void assertQuery(Sql.Query query, String sqlString, Object... sqlParams) {
         assertEquals(sqlString, query.toString());
         assertEquals(Arrays.asList(sqlParams), query.params());
     }
 
-    public static void assertEquals(Sql.UpdateQuery query, String sqlString, Object... sqlParams) {
+    public static void assertQuery(Sql.UpdateQuery query, String sqlString, Object... sqlParams) {
         assertEquals(sqlString, query.toString());
         assertEquals(Arrays.asList(sqlParams), query.params());
     }

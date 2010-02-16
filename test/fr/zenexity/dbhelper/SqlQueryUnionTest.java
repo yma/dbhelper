@@ -71,7 +71,7 @@ public class SqlQueryUnionTest {
     public void params() {
         Sql.Select selectX = Sql.select().where("x", 1, 2, 3);
         Sql.Select selectY = Sql.select().where("y", 4, 5, 6);
-        SqlQueryTest.assertEquals(Sql.union(selectX).orderBy("8").union(selectY).orderBy("9"),
+        SqlQueryTest.assertQuery(Sql.union(selectX).orderBy("8").union(selectY).orderBy("9"),
                 "(x) UNION (y) ORDER BY 8, 9",
                 1, 2, 3, 4, 5, 6);
     }

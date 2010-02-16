@@ -145,9 +145,30 @@ public abstract class Sql {
         }
 
         public Where and(String expr, Object... params) { query.params(params).separator(" AND ").append(expr); return this; }
-        public Where and(Where where) { return and(where.toString(), where.query.params); }
+        public Where and(Where where) { query.paramsList(where.query.params).separator(" AND ").append(where.toString()); return this; }
         public Where or(String expr, Object... params) { query.params(params).separator(" OR ").append(expr); return this; }
-        public Where or(Where where) { return or(where.toString(), where.query.params); }
+        public Where or(Where where) { query.paramsList(where.query.params).separator(" OR ").append(where.toString()); return this; }
+
+        public static Where key(Object obj, String... keyFields) {
+            Where keyWhere = new Where();
+            Class<?> objClass = obj.getClass();
+            try {
+                for (String field : keyFields) {
+                    keyWhere.and(field+"=?", objClass.getDeclaredField(field).get(obj));
+                }
+            } catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
+            } catch (NoSuchFieldException e) {
+                throw new IllegalArgumentException(e);
+            }
+            return keyWhere;
+        }
+
+        public static Where key(Map<String, ?> map, String... keyFields) {
+            Where keyWhere = new Where();
+            for (String field : keyFields) keyWhere.and(field+"=?", map.get(field));
+            return keyWhere;
+        }
 
         @Override
         public String toString() {
@@ -361,37 +382,39 @@ public abstract class Sql {
         public Insert set(String column, Object value) { return column(column).value(value); }
         public Insert setExpr(String column, String value, Object params) { return column(column).valueExpr(value, params); }
 
-        public Insert setFrom(Object obj) {
+        public Insert object(Object obj) {
             Class<?> objClass = obj.getClass();
             Field[] objFields = objClass.getDeclaredFields();
-            for (Field objField : objFields) {
-                try {
+            try {
+                for (Field objField : objFields) {
                     set(objField.getName(), objField.get(obj));
-                } catch (IllegalArgumentException e) {
-                } catch (IllegalAccessException e) {
                 }
+            } catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
             }
             return this;
         }
 
-        public Insert setFrom(Object obj, String... fields) {
+        public Insert object(Object obj, String... fields) {
             Class<?> objClass = obj.getClass();
-            for (String field : fields) {
-                try {
+            try {
+                for (String field : fields) {
                     set(field, objClass.getDeclaredField(field).get(obj));
-                } catch (IllegalAccessException e) {
-                } catch (NoSuchFieldException e) {
                 }
+            } catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
+            } catch (NoSuchFieldException e) {
+                throw new IllegalArgumentException(e);
             }
             return this;
         }
 
-        public Insert setFromMap(Map<String,?> map) {
+        public Insert map(Map<String,?> map) {
             for (Map.Entry<String,?> entry : map.entrySet()) set(entry.getKey(), entry.getValue());
             return this;
         }
 
-        public Insert setFromMap(Map<String,?> map, String... fields) {
+        public Insert map(Map<String,?> map, String... fields) {
             for (String field : fields) set(field, map.get(field));
             return this;
         }
@@ -444,37 +467,39 @@ public abstract class Sql {
         public Update set(String name, Object value) { set.params(value).append(name+"=?"); return this; }
         public Update setExpr(String name, String expr, Object... params) { set.params(params).append(name+"="+expr); return this; }
 
-        public Update setFrom(Object obj) {
+        public Update object(Object obj) {
             Class<?> objClass = obj.getClass();
             Field[] objFields = objClass.getDeclaredFields();
-            for (Field objField : objFields) {
-                try {
+            try {
+                for (Field objField : objFields) {
                     set(objField.getName(), objField.get(obj));
-                } catch (IllegalArgumentException e) {
-                } catch (IllegalAccessException e) {
                 }
+            } catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
             }
             return this;
         }
 
-        public Update setFrom(Object obj, String... fields) {
+        public Update object(Object obj, String... fields) {
             Class<?> objClass = obj.getClass();
-            for (String field : fields) {
-                try {
+            try {
+                for (String field : fields) {
                     set(field, objClass.getDeclaredField(field).get(obj));
-                } catch (IllegalAccessException e) {
-                } catch (NoSuchFieldException e) {
                 }
+            } catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
+            } catch (NoSuchFieldException e) {
+                throw new IllegalArgumentException(e);
             }
             return this;
         }
 
-        public Update setFromMap(Map<String,?> map) {
+        public Update map(Map<String,?> map) {
             for (Map.Entry<String,?> entry : map.entrySet()) set(entry.getKey(), entry.getValue());
             return this;
         }
 
-        public Update setFromMap(Map<String,?> map, String... fields) {
+        public Update map(Map<String,?> map, String... fields) {
             for (String field : fields) set(field, map.get(field));
             return this;
         }
@@ -536,8 +561,8 @@ public abstract class Sql {
     public static Update update(Class<?> clazz) { return new Update().update(clazz); }
     public static Update update(Class<?>... classes) { return new Update().update(classes); }
 
+    public static Where where() { return new Where(); }
     public static Where where(String expr, Object... params) { return new Where().and(expr, params); }
-    public static Where where(Where where) { return new Where().and(where); }
 
     public static Select clone(Select src) { return new Select(src); }
     public static Union  clone(Union  src) { return new Union (src); }
