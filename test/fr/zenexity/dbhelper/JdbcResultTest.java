@@ -23,7 +23,7 @@ public class JdbcResultTest extends TestingDatabase {
 
         Sql.Select query = Sql.selectAll().from(Entry.class);
 
-        for (String distName : jdbc.iterate(query, JdbcResult.primitiveFactory(String.class, "distName"))) {
+        for (String distName : jdbc.execute(query, JdbcResult.primitiveFactory(String.class, "distName"))) {
             assertTrue(distNames.contains(distName));
             distNames.remove(distName);
         }
@@ -42,7 +42,7 @@ public class JdbcResultTest extends TestingDatabase {
 
         Sql.Select query = Sql.selectAll().from(Entry.class);
 
-        for (String version : jdbc.iterate(query, JdbcResult.primitiveFactory(String.class, "version"))) {
+        for (String version : jdbc.execute(query, JdbcResult.primitiveFactory(String.class, "version"))) {
             assertTrue(versions.contains(version));
             versions.remove(version);
         }
@@ -61,7 +61,7 @@ public class JdbcResultTest extends TestingDatabase {
 
         Sql.Select query = Sql.select("distName", "version").from(Entry.class);
 
-        for (Entry entry : jdbc.iterate(query, JdbcResult.classFactory(Entry.class))) {
+        for (Entry entry : jdbc.execute(query, JdbcResult.classFactory(Entry.class))) {
             assertEquals(linux.get(entry.distName), entry.version);
             linux.remove(entry.distName);
         }
@@ -80,7 +80,7 @@ public class JdbcResultTest extends TestingDatabase {
 
         Sql.Select query = Sql.selectAll().from(Entry.class);
 
-        for (Map<String, Object> entry : jdbc.iterate(query, JdbcResult.mapFactory())) {
+        for (Map<String, Object> entry : jdbc.execute(query, JdbcResult.mapFactory())) {
             assertEquals(linux.get(entry.get("distName")), entry.get("version"));
             linux.remove(entry.get("distName"));
         }
@@ -99,7 +99,7 @@ public class JdbcResultTest extends TestingDatabase {
 
         Sql.Select query = Sql.selectAll().from(Entry.class);
 
-        for (Map<String, Object> entry : jdbc.iterate(query, JdbcResult.mapFactory("distName", "version"))) {
+        for (Map<String, Object> entry : jdbc.execute(query, JdbcResult.mapFactory("distName", "version"))) {
             Set<String> keys = entry.keySet();
             assertTrue(keys.contains("distName"));
             assertTrue(keys.contains("version"));
