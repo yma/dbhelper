@@ -11,7 +11,7 @@ import org.junit.Test;
  *
  * @author yma
  */
-public class SqlQueryTest {
+public class SqlTest {
 
     public static void assertQuery(Sql.Query query, String sqlString, Object... sqlParams) {
         assertEquals(sqlString, query.toString());

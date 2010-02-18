@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
  *
  * @author yma
  */
-public class SqlQueryWhereTest {
+public class SqlWhereTest {
 
     public static void assertWhere(Sql.Where where, String sqlString, Object... sqlParams) {
         assertEquals(sqlString, where.toString());

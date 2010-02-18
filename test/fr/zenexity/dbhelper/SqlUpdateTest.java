@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
  *
  * @author yma
  */
-public class SqlQueryUpdateTest {
+public class SqlUpdateTest {
 
     @Test
     public void update() {
@@ -23,22 +23,22 @@ public class SqlQueryUpdateTest {
 
     @Test
     public void set() {
-        SqlQueryTest.assertQuery(Sql.update().set("x", 1), "SET x=?", 1);
-        SqlQueryTest.assertQuery(Sql.update().set("x", 1).set("y", 2), "SET x=?, y=?", 1, 2);
+        SqlTest.assertQuery(Sql.update().set("x", 1), "SET x=?", 1);
+        SqlTest.assertQuery(Sql.update().set("x", 1).set("y", 2), "SET x=?, y=?", 1, 2);
     }
 
     @Test
     public void setExpr() {
-        SqlQueryTest.assertQuery(Sql.update().setExpr("x", "a", 1), "SET x=a", 1);
-        SqlQueryTest.assertQuery(Sql.update().setExpr("x", "a", 1).setExpr("y", "b", 2), "SET x=a, y=b", 1, 2);
+        SqlTest.assertQuery(Sql.update().setExpr("x", "a", 1), "SET x=a", 1);
+        SqlTest.assertQuery(Sql.update().setExpr("x", "a", 1).setExpr("y", "b", 2), "SET x=a, y=b", 1, 2);
     }
 
     @Test
     public void object() {
-        SqlQueryTest.assertQuery(Sql.update().object(new xyz(1,2,3)), "SET x=?, y=?, z=?", 1, 2, 3);
-        SqlQueryTest.assertQuery(Sql.update().object(new xyz(1,2,3), "y"), "SET y=?", 2);
-        SqlQueryTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "z"), "SET x=?, z=?", 1, 3);
-        SqlQueryTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3)), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "y"), "SET y=?", 2);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "z"), "SET x=?, z=?", 1, 3);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
     }
 
     @Test
@@ -47,16 +47,16 @@ public class SqlQueryUpdateTest {
         map.put("x", 1);
         map.put("y", 2);
         map.put("z", 3);
-        SqlQueryTest.assertQuery(Sql.update().map(map), "SET x=?, y=?, z=?", 1, 2, 3);
-        SqlQueryTest.assertQuery(Sql.update().map(map, "y"), "SET y=?", 2);
-        SqlQueryTest.assertQuery(Sql.update().map(map, "x", "z"), "SET x=?, z=?", 1, 3);
-        SqlQueryTest.assertQuery(Sql.update().map(map, "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlTest.assertQuery(Sql.update().map(map), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlTest.assertQuery(Sql.update().map(map, "y"), "SET y=?", 2);
+        SqlTest.assertQuery(Sql.update().map(map, "x", "z"), "SET x=?, z=?", 1, 3);
+        SqlTest.assertQuery(Sql.update().map(map, "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
     }
 
     @Test
     public void where() {
-        SqlQueryTest.assertQuery(Sql.update().where("x", 1), "WHERE x", 1);
-        SqlQueryTest.assertQuery(Sql.update().where("x", 1).andWhere("y", 2), "WHERE x AND y", 1, 2);
+        SqlTest.assertQuery(Sql.update().where("x", 1), "WHERE x", 1);
+        SqlTest.assertQuery(Sql.update().where("x", 1).andWhere("y", 2), "WHERE x AND y", 1, 2);
         assertEquals("WHERE x OR y", Sql.update().where("x").orWhere("y").toString());
     }
 
@@ -81,7 +81,7 @@ public class SqlQueryUpdateTest {
 
     @Test
     public void full() {
-        SqlQueryTest.assertQuery(Sql.update("x").set("y", 3).where("z", 4).orderBy(1).limit(2),
+        SqlTest.assertQuery(Sql.update("x").set("y", 3).where("z", 4).orderBy(1).limit(2),
                 "UPDATE x SET y=? WHERE z ORDER BY 1 LIMIT 2", 3, 4);
     }
 
