@@ -33,6 +33,12 @@ public class SqlQuerySelectTest {
     }
 
     @Test
+    public void selectColumnsArray() {
+        assertEquals("SELECT x, y", new Sql.Select().select(new Object[] { "x", "y" }).toString());
+        assertFalse("SELECT x, y, z".equals(new Sql.Select().select("x", new Object[] { "y", "z" }).toString()));
+    }
+
+    @Test
     public void selectAll() {
         assertEquals("SELECT *", Sql.selectAll().toString());
         assertEquals("SELECT *, *", Sql.selectAll().selectAll().toString());
