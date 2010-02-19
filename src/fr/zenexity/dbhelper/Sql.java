@@ -121,13 +121,18 @@ public abstract class Sql {
             params = new ArrayList<Object>(src.params);
         }
 
+        public ConcatWithParams param(Object obj) {
+            params.add(obj);
+            return this;
+        }
+
         public ConcatWithParams params(Object... objs) {
             for (Object obj : objs) params.add(obj);
             return this;
         }
 
-        public ConcatWithParams paramsList(List<Object> objs) {
-            for (Object obj : objs) params.add(obj);
+        public ConcatWithParams paramsList(List<?> objs) {
+            params.addAll(objs);
             return this;
         }
     }
@@ -192,6 +197,74 @@ public abstract class Sql {
     public interface UpdateQuery {
         @Override String toString();
         List<Object> params();
+    }
+
+    public static final class FinalQuery implements Query {
+        public final String query;
+        public final List<Object> params;
+
+        public FinalQuery(Query src) {
+            query = src.toString();
+            params = new ArrayList<Object>(src.params());
+        }
+
+        public FinalQuery(Query src, Object param) {
+            this(src);
+            this.params.add(param);
+        }
+
+        public FinalQuery(Query src, Object... params) {
+            this(src);
+            for (Object param : params) this.params.add(param);
+        }
+
+        public FinalQuery(Query src, List<?> params) {
+            this(src);
+            this.params.addAll(params);
+        }
+
+        @Override
+        public String toString() {
+            return query;
+        }
+
+        public List<Object> params() {
+            return params;
+        }
+    }
+
+    public static final class FinalUpdateQuery implements UpdateQuery {
+        public final String query;
+        public final List<Object> params;
+
+        public FinalUpdateQuery(UpdateQuery src) {
+            query = src.toString();
+            params = new ArrayList<Object>(src.params());
+        }
+
+        public FinalUpdateQuery(UpdateQuery src, Object param) {
+            this(src);
+            this.params.add(param);
+        }
+
+        public FinalUpdateQuery(UpdateQuery src, Object... params) {
+            this(src);
+            for (Object param : params) this.params.add(param);
+        }
+
+        public FinalUpdateQuery(UpdateQuery src, List<?> params) {
+            this(src);
+            this.params.addAll(params);
+        }
+
+        @Override
+        public String toString() {
+            return query;
+        }
+
+        public List<Object> params() {
+            return params;
+        }
     }
 
     public static final class Select implements Query {
@@ -380,7 +453,7 @@ public abstract class Sql {
         public Insert values(Object... values) { for (Object value : values) value(value); return this; }
 
         public Insert set(String column, Object value) { return column(column).value(value); }
-        public Insert setExpr(String column, String value, Object params) { return column(column).valueExpr(value, params); }
+        public Insert setExpr(String column, String value, Object... params) { return column(column).valueExpr(value, params); }
 
         public Insert object(Object obj) {
             Class<?> objClass = obj.getClass();
@@ -464,7 +537,7 @@ public abstract class Sql {
         public Update update(Class<?> clazz) { update.append(clazz.getSimpleName()); return this; }
         public Update update(Class<?>... classes) { for (Class<?> clazz : classes) update.append(clazz.getSimpleName()); return this; }
 
-        public Update set(String name, Object value) { set.params(value).append(name+"=?"); return this; }
+        public Update set(String name, Object value) { set.param(value).append(name+"=?"); return this; }
         public Update setExpr(String name, String expr, Object... params) { set.params(params).append(name+"="+expr); return this; }
 
         public Update object(Object obj) {
@@ -567,7 +640,19 @@ public abstract class Sql {
     public static Select clone(Select src) { return new Select(src); }
     public static Union  clone(Union  src) { return new Union (src); }
     public static Insert clone(Insert src) { return new Insert(src); }
+    public static Update clone(Update src) { return new Update(src); }
     public static Where  clone(Where  src) { return new Where (src); }
+    public static FinalQuery clone(FinalQuery src) { return new FinalQuery(src); }
+    public static FinalUpdateQuery clone(FinalUpdateQuery src) { return new FinalUpdateQuery(src); }
+
+    public static FinalQuery finalQuery(Query src) { return new FinalQuery(src); }
+    public static FinalQuery finalQuery(Query src, Object param) { return new FinalQuery(src, param); }
+    public static FinalQuery finalQuery(Query src, Object... params) { return new FinalQuery(src, params); }
+    public static FinalQuery finalQuery(Query src, List<?> params) { return new FinalQuery(src, params); }
+    public static FinalUpdateQuery finalQuery(UpdateQuery src) { return new FinalUpdateQuery(src); }
+    public static FinalUpdateQuery finalQuery(UpdateQuery src, Object param) { return new FinalUpdateQuery(src, param); }
+    public static FinalUpdateQuery finalQuery(UpdateQuery src, Object... params) { return new FinalUpdateQuery(src, params); }
+    public static FinalUpdateQuery finalQuery(UpdateQuery src, List<?> params) { return new FinalUpdateQuery(src, params); }
 
     public static String quote(String str) {
         return "'" + str.replace("'","\\'") + "'";
