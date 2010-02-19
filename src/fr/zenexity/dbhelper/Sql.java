@@ -131,8 +131,8 @@ public abstract class Sql {
             return this;
         }
 
-        public ConcatWithParams paramsList(List<?> objs) {
-            params.addAll(objs);
+        public ConcatWithParams paramsList(Iterable<?> objs) {
+            for (Object obj : objs) params.add(obj);
             return this;
         }
     }
@@ -184,19 +184,25 @@ public abstract class Sql {
             return query.value();
         }
 
-        public List<Object> params() {
+        public Iterable<Object> params() {
             return query.params;
+        }
+
+        public List<Object> paramsList() {
+            return new ArrayList<Object>(query.params);
         }
     }
 
     public interface Query {
         @Override String toString();
-        List<Object> params();
+        Iterable<Object> params();
+        List<Object> copyParams();
     }
 
     public interface UpdateQuery {
         @Override String toString();
-        List<Object> params();
+        Iterable<Object> params();
+        List<Object> copyParams();
     }
 
     public static final class FinalQuery implements Query {
@@ -205,7 +211,7 @@ public abstract class Sql {
 
         public FinalQuery(Query src) {
             query = src.toString();
-            params = new ArrayList<Object>(src.params());
+            params = src.copyParams();
         }
 
         public FinalQuery(Query src, Object param) {
@@ -218,9 +224,9 @@ public abstract class Sql {
             for (Object param : params) this.params.add(param);
         }
 
-        public FinalQuery(Query src, List<?> params) {
+        public FinalQuery(Query src, Iterable<?> params) {
             this(src);
-            this.params.addAll(params);
+            for (Object param : params) this.params.add(param);
         }
 
         @Override
@@ -228,8 +234,12 @@ public abstract class Sql {
             return query;
         }
 
-        public List<Object> params() {
+        public Iterable<Object> params() {
             return params;
+        }
+
+        public List<Object> copyParams() {
+            return new ArrayList<Object>(params);
         }
     }
 
@@ -239,7 +249,7 @@ public abstract class Sql {
 
         public FinalUpdateQuery(UpdateQuery src) {
             query = src.toString();
-            params = new ArrayList<Object>(src.params());
+            params = src.copyParams();
         }
 
         public FinalUpdateQuery(UpdateQuery src, Object param) {
@@ -252,9 +262,9 @@ public abstract class Sql {
             for (Object param : params) this.params.add(param);
         }
 
-        public FinalUpdateQuery(UpdateQuery src, List<?> params) {
+        public FinalUpdateQuery(UpdateQuery src, Iterable<?> params) {
             this(src);
-            this.params.addAll(params);
+            for (Object param : params) this.params.add(param);
         }
 
         @Override
@@ -262,8 +272,12 @@ public abstract class Sql {
             return query;
         }
 
-        public List<Object> params() {
+        public Iterable<Object> params() {
             return params;
+        }
+
+        public List<Object> copyParams() {
+            return new ArrayList<Object>(params);
         }
     }
 
@@ -360,10 +374,14 @@ public abstract class Sql {
                     .toString();
         }
 
-        public List<Object> params() {
+        public Iterable<Object> params() {
+            return copyParams();
+        }
+
+        public List<Object> copyParams() {
             List<Object> list = new ArrayList<Object>();
             list.addAll(join.params);
-            list.addAll(where.params());
+            for (Object whereParam : where.params()) list.add(whereParam);
             list.addAll(having.params);
             return list;
         }
@@ -415,8 +433,12 @@ public abstract class Sql {
                     .toString();
         }
 
-        public List<Object> params() {
+        public Iterable<Object> params() {
             return union.params;
+        }
+
+        public List<Object> copyParams() {
+            return new ArrayList<Object>(union.params);
         }
     }
 
@@ -501,8 +523,12 @@ public abstract class Sql {
                     .toString();
         }
 
-        public List<Object> params() {
+        public Iterable<Object> params() {
             return values.params;
+        }
+
+        public List<Object> copyParams() {
+            return new ArrayList<Object>(values.params);
         }
     }
 
@@ -600,10 +626,14 @@ public abstract class Sql {
                     .toString();
         }
 
-        public List<Object> params() {
+        public Iterable<Object> params() {
+            return copyParams();
+        }
+
+        public List<Object> copyParams() {
             List<Object> list = new ArrayList<Object>();
             list.addAll(set.params);
-            list.addAll(where.params());
+            for (Object whereParam : where.params()) list.add(whereParam);
             return list;
         }
     }
@@ -648,11 +678,11 @@ public abstract class Sql {
     public static FinalQuery finalQuery(Query src) { return new FinalQuery(src); }
     public static FinalQuery finalQuery(Query src, Object param) { return new FinalQuery(src, param); }
     public static FinalQuery finalQuery(Query src, Object... params) { return new FinalQuery(src, params); }
-    public static FinalQuery finalQuery(Query src, List<?> params) { return new FinalQuery(src, params); }
+    public static FinalQuery finalQuery(Query src, Iterable<?> params) { return new FinalQuery(src, params); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src) { return new FinalUpdateQuery(src); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object param) { return new FinalUpdateQuery(src, param); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object... params) { return new FinalUpdateQuery(src, params); }
-    public static FinalUpdateQuery finalQuery(UpdateQuery src, List<?> params) { return new FinalUpdateQuery(src, params); }
+    public static FinalUpdateQuery finalQuery(UpdateQuery src, Iterable<?> params) { return new FinalUpdateQuery(src, params); }
 
     public static String quote(String str) {
         return "'" + str.replace("'","\\'") + "'";
