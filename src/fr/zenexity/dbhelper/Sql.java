@@ -514,6 +514,16 @@ public abstract class Sql {
             return this;
         }
 
+        public Insert setColumns(String... columns) {
+            for (String column : columns) setExpr(column, "?");
+            return this;
+        }
+
+        public Insert setColumns(Iterable<String> columns) {
+            for (String column : columns) setExpr(column, "?");
+            return this;
+        }
+
         @Override
         public String toString() {
             return new Concat(""," ").defaultValue(null)
@@ -600,6 +610,16 @@ public abstract class Sql {
 
         public Update map(Map<String,?> map, String... fields) {
             for (String field : fields) set(field, map.get(field));
+            return this;
+        }
+
+        public Update setColumns(String... columns) {
+            for (String column : columns) setExpr(column, "?");
+            return this;
+        }
+
+        public Update setColumns(Iterable<String> columns) {
+            for (String column : columns) setExpr(column, "?");
             return this;
         }
 

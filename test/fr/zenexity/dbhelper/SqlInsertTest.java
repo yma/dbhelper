@@ -1,5 +1,6 @@
 package fr.zenexity.dbhelper;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -108,6 +109,12 @@ public class SqlInsertTest {
         SqlTest.assertQuery(Sql.insert().map(map, "y"), "(y) VALUES (?)", 2);
         SqlTest.assertQuery(Sql.insert().map(map, "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
         SqlTest.assertQuery(Sql.insert().map(map, "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
+    }
+
+    @Test
+    public void testSetColumns() {
+        SqlTest.assertQuery(Sql.insert().setColumns("x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)");
+        SqlTest.assertQuery(Sql.insert().setColumns(Arrays.asList("x", "y", "z")), "(x, y, z) VALUES (?, ?, ?)");
     }
 
     @Test
