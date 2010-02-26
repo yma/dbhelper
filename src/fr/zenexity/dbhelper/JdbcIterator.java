@@ -1,6 +1,5 @@
 package fr.zenexity.dbhelper;
 
-import java.io.Closeable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -11,18 +10,24 @@ import java.util.List;
  * Iterate over a JDBC ResultSet
  * @author yma
  */
-public class JdbcIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
+public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
     protected final JdbcResult.Factory<T> factory;
     protected ResultSet result;
     protected T next;
 
-    public JdbcIterator(ResultSet result, JdbcResult.Factory<T> resultFactory) throws SQLException {
+    public JdbcIterator(ResultSet result, JdbcResult.Factory<T> resultFactory) {
         this.factory = resultFactory;
         this.result = result;
         next = null;
 
-        if (this.result != null) this.factory.init(this.result);
+        if (this.result != null) {
+            try {
+                this.factory.init(this.result);
+            } catch (SQLException e) {
+                throw new JdbcIteratorException(e);
+            }
+        }
     }
 
     public void close() {
@@ -33,7 +38,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
                 result = null;
             } catch (SQLException ex) {
                 result = null;
-                throw new RuntimeException(ex);
+                throw new JdbcIteratorException(ex);
             }
         }
     }
@@ -42,13 +47,12 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         if (iterator instanceof JdbcIterator<?>) ((JdbcIterator<?>)iterator).close();
     }
 
-
     protected void load() {
         if (next == null && result != null) try {
             if (result.next()) next = factory.create(result);
             else close();
         } catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            throw new JdbcIteratorException(ex);
         }
     }
 
@@ -78,14 +82,22 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T>, Closeable {
         return list;
     }
 
+    public T first() {
+        return next();
+    }
+
     public static class Window<T> extends JdbcIterator<T> {
 
         private int size;
 
-        public Window(ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) throws SQLException {
+        public Window(ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
             super(result, resultFactory);
             this.size = size;
-            seek(offset);
+            try {
+                seek(offset);
+            } catch (SQLException e) {
+                throw new JdbcIteratorException(e);
+            }
         }
 
         private void seek(int offset) throws SQLException {
