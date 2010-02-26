@@ -53,16 +53,19 @@ public class JdbcIteratorTest extends TestingDatabase {
     @Test
     public void first() throws SQLException {
         Sql.Select query = Sql.selectAll().from(Entry.class).orderBy("distName");
-        Entry entry = new JdbcIterator<Entry>(jdbc.connection.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version")).first();
+        JdbcIterator<Entry> it = new JdbcIterator<Entry>(jdbc.connection.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version"));
+        Entry entry = it.first();
         assertEquals("Debian", entry.distName);
         assertEquals("5.0", entry.version);
+        assertFalse(it.hasNext());
     }
 
     @Test
     public void firstNotFound() throws SQLException {
         Sql.Select query = Sql.selectAll().from(Entry.class).where("distName=?","yop").orderBy("distName");
-        Entry entry = new JdbcIterator<Entry>(jdbc.connection.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version")).first();
-        assertNull(entry);
+        JdbcIterator<Entry> it = new JdbcIterator<Entry>(jdbc.connection.execute(query), JdbcResult.classFactory(Entry.class, "distName", "version"));
+        assertNull(it.first());
+        assertFalse(it.hasNext());
     }
 
     @Test

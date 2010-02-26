@@ -83,7 +83,9 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     }
 
     public T first() {
-        return next();
+        T e = next();
+        close();
+        return e;
     }
 
     public static class Window<T> extends JdbcIterator<T> {
