@@ -39,7 +39,23 @@ public class SqlUpdateTest {
         SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3)), "SET x=?, y=?, z=?", 1, 2, 3);
         SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "y"), "SET y=?", 2);
         SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "z"), "SET x=?, z=?", 1, 3);
-        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "_static", "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
+
+        try {
+            Sql.update().object(new xyz(1,2,3), "_private");
+        } catch (IllegalArgumentException e) {
+            Throwable cause = e.getCause();
+            assertEquals(NoSuchFieldException.class, cause.getClass());
+            assertEquals("_private", cause.getMessage());
+        }
+
+        try {
+            Sql.update().object(new xyz(1,2,3), "_protected");
+        } catch (IllegalArgumentException e) {
+            Throwable cause = e.getCause();
+            assertEquals(NoSuchFieldException.class, cause.getClass());
+            assertEquals("_protected", cause.getMessage());
+        }
     }
 
     @Test
@@ -93,6 +109,11 @@ public class SqlUpdateTest {
     }
 
     public static class xyz {
+        @SuppressWarnings("unused")
+        private int _private;
+        protected int _protected;
+        public static int _static = 0;
+
         public int x, y, z;
         public xyz(int x, int y, int z) {
             this.x = x;

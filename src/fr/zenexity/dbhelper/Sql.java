@@ -1,6 +1,7 @@
 package fr.zenexity.dbhelper;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -479,11 +480,12 @@ public abstract class Sql {
 
         public Insert object(Object obj) {
             Class<?> objClass = obj.getClass();
-            Field[] objFields = objClass.getDeclaredFields();
+            Field[] objFields = objClass.getFields();
             try {
-                for (Field objField : objFields) {
-                    set(objField.getName(), objField.get(obj));
-                }
+                for (Field objField : objFields)
+                    if ((objField.getModifiers() & Modifier.STATIC) == 0) {
+                        set(objField.getName(), objField.get(obj));
+                    }
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
             }
@@ -494,7 +496,9 @@ public abstract class Sql {
             Class<?> objClass = obj.getClass();
             try {
                 for (String field : fields) {
-                    set(field, objClass.getDeclaredField(field).get(obj));
+                    Field objField = objClass.getField(field);
+                    if ((objField.getModifiers() & Modifier.STATIC) == 0)
+                        set(field, objField.get(obj));
                 }
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
@@ -578,11 +582,12 @@ public abstract class Sql {
 
         public Update object(Object obj) {
             Class<?> objClass = obj.getClass();
-            Field[] objFields = objClass.getDeclaredFields();
+            Field[] objFields = objClass.getFields();
             try {
-                for (Field objField : objFields) {
-                    set(objField.getName(), objField.get(obj));
-                }
+                for (Field objField : objFields)
+                    if ((objField.getModifiers() & Modifier.STATIC) == 0) {
+                        set(objField.getName(), objField.get(obj));
+                    }
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
             }
@@ -593,7 +598,9 @@ public abstract class Sql {
             Class<?> objClass = obj.getClass();
             try {
                 for (String field : fields) {
-                    set(field, objClass.getDeclaredField(field).get(obj));
+                    Field objField = objClass.getField(field);
+                    if ((objField.getModifiers() & Modifier.STATIC) == 0)
+                        set(field, objField.get(obj));
                 }
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
