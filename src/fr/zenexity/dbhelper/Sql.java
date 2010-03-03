@@ -665,6 +665,69 @@ public abstract class Sql {
         }
     }
 
+    public static final class Delete implements UpdateQuery {
+        private final String from;
+        private final Concat using;
+        public final Where where;
+
+        public Delete(String from) {
+            this(from, false);
+        }
+
+        public Delete(Class<?> from) {
+            this(from.getSimpleName(), false);
+        }
+
+        public Delete(Class<?> from, boolean only) {
+            this(from.getSimpleName(), only);
+        }
+
+        public Delete(String from, boolean only) {
+            this.from = "DELETE FROM " + (only?"ONLY ":"") + from;
+            using = new Concat("USING ", ", ");
+            using.defaultValue(null);
+            where = new Where();
+            where.query.prefix("WHERE ").suffix("");
+        }
+
+        public Delete(Delete src) {
+            from = new String(src.from);
+            using = new Concat(src.using);
+            where = new Where(src.where);
+        }
+
+        public Delete using(String table) { using.append(table); return this; }
+        public Delete using(String... tables) { using.add((Object[])tables); return this; }
+        public Delete using(Class<?> clazz) { using.append(clazz.getSimpleName()); return this; }
+        public Delete using(Class<?>... classes) { for (Class<?> clazz : classes) using.append(clazz.getSimpleName()); return this; }
+
+        public Delete where(String expr, Object... params) { return andWhere(expr, params); }
+        public Delete where(Where expr) { return andWhere(expr); }
+        public Delete andWhere(String expr, Object... params) { where.and(expr, params); return this; }
+        public Delete andWhere(Where expr) { where.and(expr); return this; }
+        public Delete orWhere(String expr, Object... params) { where.or(expr, params); return this; }
+        public Delete orWhere(Where expr) { where.or(expr); return this; }
+
+        @Override
+        public String toString() {
+            return new Concat(""," ").defaultValue(null)
+                    .append(from)
+                    .append(using)
+                    .append(where)
+                    .toString();
+        }
+
+        public Iterable<Object> params() {
+            return where.params();
+        }
+
+        public List<Object> copyParams() {
+            List<Object> list = new ArrayList<Object>();
+            for (Object whereParam : where.params()) list.add(whereParam);
+            return list;
+        }
+    }
+
     public static Select select() { return new Select(); }
     public static Select selectAll() { return new Select().selectAll(); }
     public static Select select(Object column) { return new Select().select(column); }
@@ -691,6 +754,11 @@ public abstract class Sql {
     public static Update update(Class<?> clazz) { return new Update().update(clazz); }
     public static Update update(Class<?>... classes) { return new Update().update(classes); }
 
+    public static Delete delete(String table) { return new Delete(table); }
+    public static Delete delete(Class<?> clazz) { return new Delete(clazz); }
+    public static Delete deleteOnly(String table) { return new Delete(table, true); }
+    public static Delete deleteOnly(Class<?> clazz) { return new Delete(clazz, true); }
+
     public static Where where() { return new Where(); }
     public static Where where(String expr, Object... params) { return new Where().and(expr, params); }
 
@@ -698,6 +766,7 @@ public abstract class Sql {
     public static Union  clone(Union  src) { return new Union (src); }
     public static Insert clone(Insert src) { return new Insert(src); }
     public static Update clone(Update src) { return new Update(src); }
+    public static Delete clone(Delete src) { return new Delete(src); }
     public static Where  clone(Where  src) { return new Where (src); }
     public static FinalQuery clone(FinalQuery src) { return new FinalQuery(src); }
     public static FinalUpdateQuery clone(FinalUpdateQuery src) { return new FinalUpdateQuery(src); }
