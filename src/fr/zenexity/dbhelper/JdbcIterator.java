@@ -2,6 +2,7 @@ package fr.zenexity.dbhelper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -32,12 +33,13 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
     public void close() {
         if (result != null) {
+            next = null;
             try {
-                next = null;
+                Statement st = result.getStatement();
                 result.close();
+                if (st != null) st.close();
                 result = null;
             } catch (SQLException ex) {
-                result = null;
                 throw new JdbcIteratorException(ex);
             }
         }

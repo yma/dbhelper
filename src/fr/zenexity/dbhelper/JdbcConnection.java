@@ -28,25 +28,47 @@ public class JdbcConnection {
     public static ResultSet query(Connection cnx, String sql, Object... params) throws SQLException {
         PreparedStatement pst = prepareStatement(cnx, sql);
         params(pst, params);
-        return pst.executeQuery();
+        try {
+            return pst.executeQuery();
+        } catch (SQLException e) {
+            pst.close();
+            throw e;
+        }
     }
 
     public static ResultSet queryList(Connection cnx, String sql, Iterable<Object> params) throws SQLException {
         PreparedStatement pst = prepareStatement(cnx, sql);
         paramsList(pst, params);
-        return pst.executeQuery();
+        try {
+            return pst.executeQuery();
+        } catch (SQLException e) {
+            pst.close();
+            throw e;
+        }
     }
 
     public static int update(Connection cnx, String sql, Object... params) throws SQLException {
         PreparedStatement pst = prepareStatement(cnx, sql);
         params(pst, params);
-        return pst.executeUpdate();
+        final int result;
+        try {
+            result = pst.executeUpdate();
+        } finally {
+            pst.close();
+        }
+        return result;
     }
 
     public static int updateList(Connection cnx, String sql, Iterable<Object> params) throws SQLException {
         PreparedStatement pst = prepareStatement(cnx, sql);
         paramsList(pst, params);
-        return pst.executeUpdate();
+        final int result;
+        try {
+            result = pst.executeUpdate();
+        } finally {
+            pst.close();
+        }
+        return result;
     }
 
 
