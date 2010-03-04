@@ -82,6 +82,10 @@ public class Jdbc {
         this.connection = connection;
     }
 
+    public void close() throws SQLException {
+        connection.close();
+    }
+
     public JdbcStatement newStatement(String query, Object... params) throws SQLException {
         JdbcStatement statement =  new JdbcStatement(connection, query);
         statement.params(params);
