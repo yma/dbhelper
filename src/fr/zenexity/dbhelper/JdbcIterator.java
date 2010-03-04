@@ -14,11 +14,16 @@ import java.util.List;
 public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
     protected final JdbcResult.Factory<T> factory;
+    protected final Statement statement;
     protected ResultSet result;
     protected T next;
 
-    public JdbcIterator(ResultSet result, JdbcResult.Factory<T> resultFactory) {
+    /**
+     * if statement is not null then it will be closed with the ResultSet
+     */
+    public JdbcIterator(Statement statement, ResultSet result, JdbcResult.Factory<T> resultFactory) {
         this.factory = resultFactory;
+        this.statement = statement;
         this.result = result;
         next = null;
 
@@ -35,9 +40,8 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
         if (result != null) {
             next = null;
             try {
-                Statement st = result.getStatement();
                 result.close();
-                if (st != null) st.close();
+                if (statement != null) statement.close();
                 result = null;
             } catch (SQLException ex) {
                 throw new JdbcIteratorException(ex);
@@ -94,8 +98,8 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
         private int size;
 
-        public Window(ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
-            super(result, resultFactory);
+        public Window(Statement statement, ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
+            super(statement, result, resultFactory);
             this.size = size;
             try {
                 seek(offset);
