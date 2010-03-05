@@ -18,7 +18,7 @@ public class JdbcResult {
 
     public interface Factory<T> {
         void init(ResultSet result) throws SQLException;
-        T create(ResultSet result) throws SQLException;
+        T create(ResultSet result) throws SQLException, JdbcResultException;
     }
 
 
@@ -169,7 +169,7 @@ public class JdbcResult {
             }
         }
 
-        public T create(ResultSet result) throws SQLException {
+        public T create(ResultSet result) throws SQLException, JdbcResultException {
             try {
                 T obj = objectClass.newInstance();
                 for (String field : fields) {
@@ -179,11 +179,11 @@ public class JdbcResult {
                 }
                 return obj;
             } catch (InstantiationException ex) {
-                throw new RuntimeException(ex);
+                throw new JdbcResultException(ex);
             } catch (NoSuchFieldException ex) {
-                throw new RuntimeException(ex);
+                throw new JdbcResultException(ex);
             } catch (IllegalAccessException ex) {
-                throw new RuntimeException(ex);
+                throw new JdbcResultException(ex);
             }
         }
 
@@ -235,7 +235,6 @@ public class JdbcResult {
             return map;
         }
 
-        @SuppressWarnings("serial")
         private class FieldHashMap extends HashMap<String, Object> {
             @Override
             public Object put(String key, Object value) {

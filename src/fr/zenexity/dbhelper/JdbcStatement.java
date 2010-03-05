@@ -27,9 +27,13 @@ public class JdbcStatement {
         return result;
     }
 
+    public JdbcStatement(PreparedStatement statement, int index) {
+        this.statement = statement;
+        this.index = index;
+    }
+
     public JdbcStatement(Connection cnx, String query) throws SQLException {
-        statement = prepare(cnx, query.toString());
-        index = 0;
+        this(prepare(cnx, query), 0);
     }
 
     public JdbcStatement(Connection cnx, Sql.Query query) throws SQLException {

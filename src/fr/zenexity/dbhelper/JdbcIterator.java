@@ -14,7 +14,7 @@ import java.util.List;
 public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
     protected final JdbcResult.Factory<T> factory;
-    protected final Statement statement;
+    protected Statement statement;
     protected ResultSet result;
     protected T next;
 
@@ -37,15 +37,18 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     }
 
     public void close() {
-        if (result != null) {
-            next = null;
-            try {
+        try {
+            if (result != null) {
+                next = null;
                 result.close();
-                if (statement != null) statement.close();
                 result = null;
-            } catch (SQLException ex) {
-                throw new JdbcIteratorException(ex);
             }
+            if (statement != null) {
+                statement.close();
+                statement = null;
+            }
+        } catch (SQLException ex) {
+            throw new JdbcIteratorException(ex);
         }
     }
 
@@ -58,6 +61,8 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
             if (result.next()) next = factory.create(result);
             else close();
         } catch (SQLException ex) {
+            throw new JdbcIteratorException(ex);
+        } catch (JdbcResultException ex) {
             throw new JdbcIteratorException(ex);
         }
     }

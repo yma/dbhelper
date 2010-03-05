@@ -8,68 +8,68 @@ import java.util.List;
 
 public class Jdbc {
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, JdbcResult.Factory<T> resultFactory) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, JdbcResult.Factory<T> resultFactory) {
         return new JdbcIterator<T>(null, result, resultFactory);
     }
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, Class<T> resultClass) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, Class<T> resultClass) {
         return new JdbcIterator<T>(null, result, JdbcResult.buildFactory(resultClass));
     }
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, Class<T> resultClass, String... fields) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, Class<T> resultClass, String... fields) {
         return new JdbcIterator<T>(null, result, JdbcResult.buildFactory(resultClass, fields));
     }
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, Class<T> resultClass, List<String> fields) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, Class<T> resultClass, List<String> fields) {
         return new JdbcIterator<T>(null, result, JdbcResult.buildFactory(resultClass, fields));
     }
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
         return new JdbcIterator.Window<T>(null, result, offset, size, resultFactory);
     }
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, int offset, int size, Class<T> resultClass) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, int offset, int size, Class<T> resultClass) {
         return new JdbcIterator.Window<T>(null, result, offset, size, JdbcResult.buildFactory(resultClass));
     }
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, int offset, int size, Class<T> resultClass, String... fields) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, int offset, int size, Class<T> resultClass, String... fields) {
         return new JdbcIterator.Window<T>(null, result, offset, size, JdbcResult.buildFactory(resultClass, fields));
     }
 
-    public static <T> JdbcIterator<T> execute(ResultSet result, int offset, int size, Class<T> resultClass, List<String> fields) {
+    public static <T> JdbcIterator<T> iterator(ResultSet result, int offset, int size, Class<T> resultClass, List<String> fields) {
         return new JdbcIterator.Window<T>(null, result, offset, size, JdbcResult.buildFactory(resultClass, fields));
     }
 
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, JdbcResult.Factory<T> resultFactory) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, JdbcResult.Factory<T> resultFactory) {
         return new JdbcIterator<T>(statement, result, resultFactory);
     }
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, Class<T> resultClass) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, Class<T> resultClass) {
         return new JdbcIterator<T>(statement, result, JdbcResult.buildFactory(resultClass));
     }
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, Class<T> resultClass, String... fields) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, Class<T> resultClass, String... fields) {
         return new JdbcIterator<T>(statement, result, JdbcResult.buildFactory(resultClass, fields));
     }
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, Class<T> resultClass, List<String> fields) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, Class<T> resultClass, List<String> fields) {
         return new JdbcIterator<T>(statement, result, JdbcResult.buildFactory(resultClass, fields));
     }
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
         return new JdbcIterator.Window<T>(statement, result, offset, size, resultFactory);
     }
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, int offset, int size, Class<T> resultClass) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, int offset, int size, Class<T> resultClass) {
         return new JdbcIterator.Window<T>(statement, result, offset, size, JdbcResult.buildFactory(resultClass));
     }
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, int offset, int size, Class<T> resultClass, String... fields) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, int offset, int size, Class<T> resultClass, String... fields) {
         return new JdbcIterator.Window<T>(statement, result, offset, size, JdbcResult.buildFactory(resultClass, fields));
     }
 
-    public static <T> JdbcIterator<T> execute(Statement statement, ResultSet result, int offset, int size, Class<T> resultClass, List<String> fields) {
+    public static <T> JdbcIterator<T> iterator(Statement statement, ResultSet result, int offset, int size, Class<T> resultClass, List<String> fields) {
         return new JdbcIterator.Window<T>(statement, result, offset, size, JdbcResult.buildFactory(resultClass, fields));
     }
 
@@ -102,42 +102,42 @@ public class Jdbc {
 
     public <T> JdbcIterator<T> execute(Sql.Query query, JdbcResult.Factory<T> resultFactory) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), resultFactory);
+        return iterator(qs.statement, qs.executeQuery(), resultFactory);
     }
 
     public <T> JdbcIterator<T> execute(Sql.Query query, Class<T> resultClass) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), JdbcResult.buildFactory(resultClass));
+        return iterator(qs.statement, qs.executeQuery(), JdbcResult.buildFactory(resultClass));
     }
 
     public <T> JdbcIterator<T> execute(Sql.Query query, Class<T> resultClass, String... fields) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), JdbcResult.buildFactory(resultClass, fields));
+        return iterator(qs.statement, qs.executeQuery(), JdbcResult.buildFactory(resultClass, fields));
     }
 
     public <T> JdbcIterator<T> execute(Sql.Query query, Class<T> resultClass, List<String> fields) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), JdbcResult.buildFactory(resultClass, fields));
+        return iterator(qs.statement, qs.executeQuery(), JdbcResult.buildFactory(resultClass, fields));
     }
 
     public <T> JdbcIterator<T> execute(Sql.Query query, int offset, int size, JdbcResult.Factory<T> resultFactory) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), offset, size, resultFactory);
+        return iterator(qs.statement, qs.executeQuery(), offset, size, resultFactory);
     }
 
     public <T> JdbcIterator<T> execute(Sql.Query query, int offset, int size, Class<T> resultClass) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), offset, size, JdbcResult.buildFactory(resultClass));
+        return iterator(qs.statement, qs.executeQuery(), offset, size, JdbcResult.buildFactory(resultClass));
     }
 
     public <T> JdbcIterator<T> execute(Sql.Query query, int offset, int size, Class<T> resultClass, String... fields) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), offset, size, JdbcResult.buildFactory(resultClass, fields));
+        return iterator(qs.statement, qs.executeQuery(), offset, size, JdbcResult.buildFactory(resultClass, fields));
     }
 
     public <T> JdbcIterator<T> execute(Sql.Query query, int offset, int size, Class<T> resultClass, List<String> fields) throws SQLException {
         JdbcStatement qs = new JdbcStatement(connection, query);
-        return execute(qs.statement, qs.executeQuery(), offset, size, JdbcResult.buildFactory(resultClass, fields));
+        return iterator(qs.statement, qs.executeQuery(), offset, size, JdbcResult.buildFactory(resultClass, fields));
     }
 
     public int executeUpdate(String query, Object... params) throws SQLException {
