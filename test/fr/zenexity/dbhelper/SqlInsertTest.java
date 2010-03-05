@@ -97,11 +97,11 @@ public class SqlInsertTest {
         SqlTest.assertQuery(Sql.insert().object(new xyz(1,2,3), "y"), "(y) VALUES (?)", 2);
         SqlTest.assertQuery(Sql.insert().object(new xyz(1,2,3), "x", "z"), "(x, z) VALUES (?, ?)", 1, 3);
         SqlTest.assertQuery(Sql.insert().object(new xyz(1,2,3), "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
-        SqlTest.assertQuery(Sql.insert().object(new xyz(1,2,3), "_static", "x", "y", "z"), "(x, y, z) VALUES (?, ?, ?)", 1, 2, 3);
 
         try {
             Sql.insert().object(new xyz(1,2,3), "_private");
-        } catch (IllegalArgumentException e) {
+            fail("SqlException expected");
+        } catch (SqlException e) {
             Throwable cause = e.getCause();
             assertEquals(NoSuchFieldException.class, cause.getClass());
             assertEquals("_private", cause.getMessage());
@@ -109,10 +109,38 @@ public class SqlInsertTest {
 
         try {
             Sql.insert().object(new xyz(1,2,3), "_protected");
-        } catch (IllegalArgumentException e) {
+            fail("SqlException expected");
+        } catch (SqlException e) {
             Throwable cause = e.getCause();
             assertEquals(NoSuchFieldException.class, cause.getClass());
             assertEquals("_protected", cause.getMessage());
+        }
+
+        try {
+            Sql.insert().object(new xyz(1,2,3), "_static");
+            fail("SqlException expected");
+        } catch (SqlException e) {
+            Throwable cause = e.getCause();
+            assertEquals(IllegalArgumentException.class, cause.getClass());
+            assertEquals("_static", cause.getMessage());
+        }
+
+        try {
+            Sql.insert().object(new xyz(1,2,3), "_transient");
+            fail("SqlException expected");
+        } catch (SqlException e) {
+            Throwable cause = e.getCause();
+            assertEquals(IllegalArgumentException.class, cause.getClass());
+            assertEquals("_transient", cause.getMessage());
+        }
+
+        try {
+            Sql.insert().object(new xyz(1,2,3), "_unknown");
+            fail("SqlException expected");
+        } catch (SqlException e) {
+            Throwable cause = e.getCause();
+            assertEquals(NoSuchFieldException.class, cause.getClass());
+            assertEquals("_unknown", cause.getMessage());
         }
     }
 
@@ -147,6 +175,7 @@ public class SqlInsertTest {
         private int _private;
         protected int _protected;
         public static int _static = 0;
+        public transient int _transient;
 
         public int x, y, z;
         public xyz(int x, int y, int z) {

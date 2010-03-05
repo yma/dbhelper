@@ -32,6 +32,8 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
                 this.factory.init(this.result);
             } catch (SQLException e) {
                 throw new JdbcIteratorException(e);
+            } catch (JdbcResultException e) {
+                throw new JdbcIteratorException(e);
             }
         }
     }

@@ -162,10 +162,8 @@ public abstract class Sql {
                 for (String field : keyFields) {
                     keyWhere.and(field+"=?", objClass.getDeclaredField(field).get(obj));
                 }
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(e);
-            } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException(e);
+            } catch (Exception e) {
+                throw new SqlException(e);
             }
             return keyWhere;
         }
@@ -483,11 +481,11 @@ public abstract class Sql {
             Field[] objFields = objClass.getFields();
             try {
                 for (Field objField : objFields)
-                    if ((objField.getModifiers() & Modifier.STATIC) == 0) {
+                    if ((objField.getModifiers() & (Modifier.STATIC | Modifier.TRANSIENT)) == 0) {
                         set(objField.getName(), objField.get(obj));
                     }
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(e);
+            } catch (Exception e) {
+                throw new SqlException(e);
             }
             return this;
         }
@@ -497,13 +495,12 @@ public abstract class Sql {
             try {
                 for (String field : fields) {
                     Field objField = objClass.getField(field);
-                    if ((objField.getModifiers() & Modifier.STATIC) == 0)
-                        set(field, objField.get(obj));
+                    if ((objField.getModifiers() & (Modifier.STATIC | Modifier.TRANSIENT)) != 0)
+                        throw new IllegalArgumentException(field);
+                    set(field, objField.get(obj));
                 }
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(e);
-            } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException(e);
+            } catch (Exception e) {
+                throw new SqlException(e);
             }
             return this;
         }
@@ -585,11 +582,11 @@ public abstract class Sql {
             Field[] objFields = objClass.getFields();
             try {
                 for (Field objField : objFields)
-                    if ((objField.getModifiers() & Modifier.STATIC) == 0) {
+                    if ((objField.getModifiers() & (Modifier.STATIC | Modifier.TRANSIENT)) == 0) {
                         set(objField.getName(), objField.get(obj));
                     }
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(e);
+            } catch (Exception e) {
+                throw new SqlException(e);
             }
             return this;
         }
@@ -599,13 +596,12 @@ public abstract class Sql {
             try {
                 for (String field : fields) {
                     Field objField = objClass.getField(field);
-                    if ((objField.getModifiers() & Modifier.STATIC) == 0)
-                        set(field, objField.get(obj));
+                    if ((objField.getModifiers() & (Modifier.STATIC | Modifier.TRANSIENT)) != 0)
+                        throw new IllegalArgumentException(field);
+                    set(field, objField.get(obj));
                 }
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(e);
-            } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException(e);
+            } catch (Exception e) {
+                throw new SqlException(e);
             }
             return this;
         }

@@ -1,15 +1,19 @@
 package fr.zenexity.dbhelper;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JdbcResult {
 
@@ -17,7 +21,7 @@ public class JdbcResult {
     }
 
     public interface Factory<T> {
-        void init(ResultSet result) throws SQLException;
+        void init(ResultSet result) throws SQLException, JdbcResultException;
         T create(ResultSet result) throws SQLException, JdbcResultException;
     }
 
@@ -80,20 +84,11 @@ public class JdbcResult {
 
 
     public static MapFactory mapFactory() {
-        return new MapFactory(null);
-    }
-
-    public static MapFactory mapFactory(String... fields) {
-        return new MapFactory(Arrays.asList(fields));
-    }
-
-    public static MapFactory mapFactory(List<String> fields) {
-        return new MapFactory(fields);
+        return new MapFactory();
     }
 
 
     public static class PrimitiveFactory<T> implements Factory<T> {
-
         private final String field;
         private int columnIndex;
 
@@ -127,110 +122,120 @@ public class JdbcResult {
             if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
             return (T) value;
         }
-
     }
 
     public static class ClassFactory<T> implements Factory<T> {
-
         private final Class<T> objectClass;
-        private List<String> fields;
+        private final Set<String> fields;
+        private List<ColumnInfo> columns;
+        private Map<String, String> labelsToFields;
 
-        public ClassFactory(Class<T> objectClass, List<String> fields) {
+        public ClassFactory(Class<T> objectClass, Collection<String> fields) {
             this.objectClass = objectClass;
-            this.fields = fields;
+            this.fields = fields == null ? null : new HashSet<String>(fields);
         }
 
         public Map<String, String> labelsToFields() {
-            Map<String, String> map = new HashMap<String, String>();
-            for (Field objectField : objectClass.getDeclaredFields()) {
-                String fieldName = objectField.getName();
-                map.put(fieldName.toLowerCase(), fieldName);
-            }
-            return map;
-        }
-
-        public void init(ResultSet result) throws SQLException {
-            if (fields == null) {
-                Map<String, String> labelsToFields = null;
-                fields = new ArrayList<String>();
-                ResultSetMetaData meta = result.getMetaData();
-                int count = meta.getColumnCount();
-                for (int i = 1; i <= count; i++) {
-                    String label = meta.getColumnLabel(i);
-                    if (label.length() != 0) {
-                        if (!meta.isCaseSensitive(i)) {
-                            if (labelsToFields == null) labelsToFields = labelsToFields();
-                            String name = labelsToFields.get(label.toLowerCase());
-                            if (name != null) label = name;
-                        }
-                        fields.add(label);
-                    }
+            if (labelsToFields == null) {
+                labelsToFields = new HashMap<String, String>();
+                for (Field objectField : objectClass.getFields()) {
+                    String fieldName = objectField.getName();
+                    labelsToFields.put(fieldName.toLowerCase(), fieldName);
                 }
             }
+            return labelsToFields;
         }
 
-        public T create(ResultSet result) throws SQLException, JdbcResultException {
-            try {
-                T obj = objectClass.newInstance();
-                for (String field : fields) {
-                    Object value = result.getObject(field);
-                    if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
-                    objectClass.getDeclaredField(field).set(obj, value);
-                }
-                return obj;
-            } catch (InstantiationException ex) {
-                throw new JdbcResultException(ex);
-            } catch (NoSuchFieldException ex) {
-                throw new JdbcResultException(ex);
-            } catch (IllegalAccessException ex) {
-                throw new JdbcResultException(ex);
-            }
-        }
-
-    }
-
-    public static class MapFactory implements Factory<Map<String, Object>> {
-
-        private List<String> fields;
-        private final Map<String, String> columnInsensitiveFields;
-
-        public MapFactory(List<String> fields) {
-            this.fields = fields;
-            columnInsensitiveFields = new HashMap<String, String>();
-        }
-
-        public void init(ResultSet result) throws SQLException {
-            List<String> columnFields = new ArrayList<String>();
+        public void init(ResultSet result) throws SQLException, JdbcResultException {
+            Map<String, Integer> fieldsIndexes = new HashMap<String, Integer>();
 
             ResultSetMetaData meta = result.getMetaData();
             int count = meta.getColumnCount();
             for (int i = 1; i <= count; i++) {
                 String label = meta.getColumnLabel(i);
                 if (label.length() != 0) {
-                    columnFields.add(label);
-                    if (!meta.isCaseSensitive(i)) columnInsensitiveFields.put(label.toLowerCase(), label);
+                    if (!meta.isCaseSensitive(i)) {
+                        String name = labelsToFields().get(label.toLowerCase());
+                        if (name != null) label = name;
+                    }
+                    if (fields == null || fields.contains(label))
+                        fieldsIndexes.put(label, i);
                 }
             }
 
-            if (fields == null) fields = columnFields;
-            else {
-                for (int i = 0; i < fields.size(); i++) {
-                    String key = fields.get(i).toLowerCase();
-                    String label = columnInsensitiveFields.get(key);
-                    if (label != null) {
-                        columnInsensitiveFields.put(key, fields.get(i));
-                        fields.set(i, label);
-                    }
+            if (fields != null) {
+                for (String field : fields) {
+                    if (!fieldsIndexes.containsKey(field))
+                        throw new JdbcResultException(new NoSuchFieldException(field));
+                }
+            }
+
+            columns = new ArrayList<ColumnInfo>();
+            try {
+                for (Map.Entry<String, Integer> fieldIndex : fieldsIndexes.entrySet()) {
+                    Field objField = objectClass.getField(fieldIndex.getKey());
+                    if ((objField.getModifiers() & (Modifier.STATIC | Modifier.TRANSIENT)) != 0)
+                        throw new IllegalArgumentException(fieldIndex.getKey());
+                    columns.add(new ColumnInfo(fieldIndex.getValue(), objField));
+                }
+            } catch (Exception e) {
+                throw new JdbcResultException(e);
+            }
+        }
+
+        public T create(ResultSet result) throws SQLException, JdbcResultException {
+            try {
+                T obj = objectClass.newInstance();
+                for (ColumnInfo column : columns) {
+                    Object value = result.getObject(column.index);
+                    if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
+                    column.field.set(obj, value);
+                }
+                return obj;
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new JdbcResultException(e);
+            }
+        }
+
+        private static class ColumnInfo {
+            public final int index;
+            public final Field field;
+
+            public ColumnInfo(int index, Field field) {
+                this.index = index;
+                this.field = field;
+            }
+        }
+    }
+
+    public static class MapFactory implements Factory<Map<String, Object>> {
+        private Map<String, String> columnInsensitiveFields;
+        private List<ColumnInfo> columns;
+
+        public void init(ResultSet result) throws SQLException, JdbcResultException {
+            columnInsensitiveFields = new HashMap<String, String>();
+            columns = new ArrayList<ColumnInfo>();
+
+            ResultSetMetaData meta = result.getMetaData();
+            int count = meta.getColumnCount();
+            for (int i = 1; i <= count; i++) {
+                String label = meta.getColumnLabel(i);
+                if (label.length() != 0) {
+                    if (!meta.isCaseSensitive(i))
+                        columnInsensitiveFields.put(label.toLowerCase(), label);
+                    columns.add(new ColumnInfo(i, label));
                 }
             }
         }
 
         public Map<String, Object> create(ResultSet result) throws SQLException {
             Map<String, Object> map = new FieldHashMap();
-            for (String field : fields) {
-                Object value = result.getObject(field);
+            for (ColumnInfo column : columns) {
+                Object value = result.getObject(column.index);
                 if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
-                map.put(field, value);
+                map.put(column.name, value);
             }
             return map;
         }
@@ -251,6 +256,15 @@ public class JdbcResult {
             }
         }
 
+        private static class ColumnInfo {
+            public final int index;
+            public final String name;
+
+            public ColumnInfo(int index, String name) {
+                this.index = index;
+                this.name = name;
+            }
+        }
     }
 
 }
