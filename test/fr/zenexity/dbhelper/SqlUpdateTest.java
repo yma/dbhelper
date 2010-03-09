@@ -37,12 +37,20 @@ public class SqlUpdateTest {
     @Test
     public void object() {
         SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3)), "SET x=?, y=?, z=?", 1, 2, 3);
-        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "y"), "SET y=?", 2);
-        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "z"), "SET x=?, z=?", 1, 3);
-        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "y"), "SET x=?, z=?", 1, 3);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "z"), "SET y=?", 2);
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "x", "y", "z"), "");
+        SqlTest.assertQuery(Sql.update().object(new xyz(1,2,3), "X"), "SET x=?, y=?, z=?", 1, 2, 3);
+    }
+
+    @Test
+    public void objectField() {
+        SqlTest.assertQuery(Sql.update().objectField(new xyz(1,2,3), "y"), "SET y=?", 2);
+        SqlTest.assertQuery(Sql.update().objectField(new xyz(1,2,3), "x", "z"), "SET x=?, z=?", 1, 3);
+        SqlTest.assertQuery(Sql.update().objectField(new xyz(1,2,3), "x", "y", "z"), "SET x=?, y=?, z=?", 1, 2, 3);
 
         try {
-            Sql.update().object(new xyz(1,2,3), "_private");
+            Sql.update().objectField(new xyz(1,2,3), "_private");
             fail("SqlException expected");
         } catch (SqlException e) {
             Throwable cause = e.getCause();
@@ -51,7 +59,7 @@ public class SqlUpdateTest {
         }
 
         try {
-            Sql.update().object(new xyz(1,2,3), "_protected");
+            Sql.update().objectField(new xyz(1,2,3), "_protected");
             fail("SqlException expected");
         } catch (SqlException e) {
             Throwable cause = e.getCause();
@@ -60,7 +68,7 @@ public class SqlUpdateTest {
         }
 
         try {
-            Sql.update().object(new xyz(1,2,3), "_static");
+            Sql.update().objectField(new xyz(1,2,3), "_static");
             fail("SqlException expected");
         } catch (SqlException e) {
             Throwable cause = e.getCause();
@@ -69,7 +77,7 @@ public class SqlUpdateTest {
         }
 
         try {
-            Sql.update().object(new xyz(1,2,3), "_transient");
+            Sql.update().objectField(new xyz(1,2,3), "_transient");
             fail("SqlException expected");
         } catch (SqlException e) {
             Throwable cause = e.getCause();
@@ -78,7 +86,7 @@ public class SqlUpdateTest {
         }
 
         try {
-            Sql.update().object(new xyz(1,2,3), "_unknown");
+            Sql.update().objectField(new xyz(1,2,3), "_unknown");
             fail("SqlException expected");
         } catch (SqlException e) {
             Throwable cause = e.getCause();

@@ -3,8 +3,10 @@ package fr.zenexity.dbhelper;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class Sql {
 
@@ -476,21 +478,28 @@ public abstract class Sql {
         public Insert set(String column, Object value) { return column(column).value(value); }
         public Insert setExpr(String column, String value, Object... params) { return column(column).valueExpr(value, params); }
 
-        public Insert object(Object obj) {
+        public Insert object(Object obj, String... exceptFields) {
+            Set<String> excepts = new HashSet<String>(exceptFields.length);
+            for (String field : exceptFields) excepts.add(field);
+
             Class<?> objClass = obj.getClass();
             Field[] objFields = objClass.getFields();
             try {
-                for (Field objField : objFields)
+                for (Field objField : objFields) {
+                    String fieldName = objField.getName();
+                    if (excepts.contains(fieldName)) continue;
+
                     if ((objField.getModifiers() & (Modifier.STATIC | Modifier.TRANSIENT)) == 0) {
-                        set(objField.getName(), objField.get(obj));
+                        set(fieldName, objField.get(obj));
                     }
+                }
             } catch (Exception e) {
                 throw new SqlException(e);
             }
             return this;
         }
 
-        public Insert object(Object obj, String... fields) {
+        public Insert objectField(Object obj, String... fields) {
             Class<?> objClass = obj.getClass();
             try {
                 for (String field : fields) {
@@ -577,21 +586,28 @@ public abstract class Sql {
         public Update set(String name, Object value) { set.param(value).append(name+"=?"); return this; }
         public Update setExpr(String name, String expr, Object... params) { set.params(params).append(name+"="+expr); return this; }
 
-        public Update object(Object obj) {
+        public Update object(Object obj, String... exceptFields) {
+            Set<String> excepts = new HashSet<String>(exceptFields.length);
+            for (String field : exceptFields) excepts.add(field);
+
             Class<?> objClass = obj.getClass();
             Field[] objFields = objClass.getFields();
             try {
-                for (Field objField : objFields)
+                for (Field objField : objFields) {
+                    String fieldName = objField.getName();
+                    if (excepts.contains(fieldName)) continue;
+
                     if ((objField.getModifiers() & (Modifier.STATIC | Modifier.TRANSIENT)) == 0) {
                         set(objField.getName(), objField.get(obj));
                     }
+                }
             } catch (Exception e) {
                 throw new SqlException(e);
             }
             return this;
         }
 
-        public Update object(Object obj, String... fields) {
+        public Update objectField(Object obj, String... fields) {
             Class<?> objClass = obj.getClass();
             try {
                 for (String field : fields) {
