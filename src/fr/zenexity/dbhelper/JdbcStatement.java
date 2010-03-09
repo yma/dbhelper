@@ -27,23 +27,43 @@ public class JdbcStatement {
         return result;
     }
 
+    public JdbcStatement(PreparedStatement statement) {
+        this(statement, 0);
+    }
+
     public JdbcStatement(PreparedStatement statement, int index) {
         this.statement = statement;
         this.index = index;
     }
 
+    public JdbcStatement(PreparedStatement statement, Object... params) throws SQLException {
+        this(statement, 0);
+        params(params);
+    }
+
+    public JdbcStatement(PreparedStatement statement, Iterable<Object> params) throws SQLException {
+        this(statement, 0);
+        paramsList(params);
+    }
+
     public JdbcStatement(Connection cnx, String query) throws SQLException {
-        this(prepare(cnx, query), 0);
+        this(prepare(cnx, query));
+    }
+
+    public JdbcStatement(Connection cnx, String query, Object... params) throws SQLException {
+        this(prepare(cnx, query), params);
+    }
+
+    public JdbcStatement(Connection cnx, String query, Iterable<Object> params) throws SQLException {
+        this(prepare(cnx, query), params);
     }
 
     public JdbcStatement(Connection cnx, Sql.Query query) throws SQLException {
-        this(cnx, query.toString());
-        paramsList(query.params());
+        this(cnx, query.toString(), query.params());
     }
 
     public JdbcStatement(Connection cnx, Sql.UpdateQuery query) throws SQLException {
-        this(cnx, query.toString());
-        paramsList(query.params());
+        this(cnx, query.toString(), query.params());
     }
 
     public void reset() throws SQLException {
