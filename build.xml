@@ -1,33 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="DB Helper" default="build" basedir=".">
+<project name="DB Helper" default="jar" basedir=".">
 
-    <target name="build">
-        <antcall target="make-jar">
-            <param name="filename" value="dbhelper.jar" />
-        </antcall>
+    <path id="classpath">
+        <fileset dir="lib">
+            <include name="*.jar" />
+        </fileset>
+    </path>
+
+    <path id="classpath.test">
+        <pathelement location="tmp/classes" />
+        <path refid="classpath" />
+    </path>
+
+    <target name="clean" depends="clean-build">
+        <delete file="dbhelper.jar" />
     </target>
 
-    <target name="build-with-sources" depends="compile-with-sources">
-        <antcall target="make-jar">
-            <param name="filename" value="dbhelper-with-sources.jar" />
-        </antcall>
+    <target name="clean-build">
+        <delete dir="tmp" failonerror="false" />
     </target>
 
-    <target name="make-jar" depends="compile">
-	<delete file="${filename}" />
+    <target name="jar" depends="build">
+	<delete file="dbhelper.jar" />
+        <jar destfile="dbhelper.jar" basedir="tmp/classes" />
+        <antcall target="clean-build" />
+    </target>
+
+    <target name="build" depends="compile, includes-sources">
         <copy todir="tmp/classes">
             <fileset dir="src">
-                <include name="**/*.properties"/>
-                <include name="**/*.xml"/>
+                <include name="**/*.properties" />
+                <include name="**/*.xml" />
             </fileset>
         </copy>
-        <jar destfile="${filename}" basedir="tmp/classes">
-        </jar>
-        <delete dir="tmp" />
     </target>
 
-    <target name="compile-with-sources" depends="compile">
+    <target name="compile">
+        <mkdir dir="tmp/classes" />
+        <javac srcdir="src" destdir="tmp/classes" debug="true" includeAntRuntime="false">
+            <classpath refid="classpath" />
+        </javac>
+    </target>
+
+    <target name="includes-sources" depends="compile" if="sources">
         <copy todir="tmp/classes">
             <fileset dir="src">
                 <include name="**/*.java"/>
@@ -35,9 +51,34 @@
         </copy>
     </target>
 
-    <target name="compile">
-        <mkdir dir="tmp/classes" />
-        <javac srcdir="src" destdir="tmp/classes" debug="true" />
+
+    <target name="compile-test" depends="compile">
+        <javac srcdir="test" destdir="tmp/classes" debug="true" includeAntRuntime="false">
+            <classpath refid="classpath" />
+        </javac>
+    </target>
+
+    <target name="test" depends="clean, compile-test, build">
+        <junit failureProperty="test.failure">
+            <classpath refid="classpath.test" />
+            <batchtest>
+                <fileset dir="tmp/classes">
+                    <include name="**/*Test.class" />
+                </fileset>
+            </batchtest>
+        </junit>
+        <antcall target="clean" />
+        <fail message="test failed" if="test.failure" />
+    </target>
+
+    <target name="test-class" depends="clean, compile-test, build">
+        <junit failureProperty="test.failure">
+            <formatter type="plain" usefile="false" />
+            <classpath refid="classpath.test" />
+            <test name="${class}" />
+        </junit>
+        <antcall target="clean" />
+        <fail message="test failed" if="test.failure" />
     </target>
 
 </project>
