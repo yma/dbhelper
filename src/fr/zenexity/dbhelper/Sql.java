@@ -157,7 +157,7 @@ public abstract class Sql {
         public Where or(String expr, Object... params) { query.params(params).separator(" OR ").append(expr); return this; }
         public Where or(Where where) { query.paramsList(where.query.params).separator(" OR ").append(where.toString()); return this; }
 
-        public static Where key(Object obj, String... keyFields) {
+        public static Where key(Object obj, String... keyFields) throws SqlException {
             Where keyWhere = new Where();
             Class<?> objClass = obj.getClass();
             try {
@@ -478,7 +478,7 @@ public abstract class Sql {
         public Insert set(String column, Object value) { return column(column).value(value); }
         public Insert setExpr(String column, String value, Object... params) { return column(column).valueExpr(value, params); }
 
-        public Insert object(Object obj, String... exceptFields) {
+        public Insert object(Object obj, String... exceptFields) throws SqlException {
             Set<String> excepts = new HashSet<String>(exceptFields.length);
             for (String field : exceptFields) excepts.add(field);
 
@@ -499,7 +499,7 @@ public abstract class Sql {
             return this;
         }
 
-        public Insert objectField(Object obj, String... fields) {
+        public Insert objectField(Object obj, String... fields) throws SqlException {
             Class<?> objClass = obj.getClass();
             try {
                 for (String field : fields) {
@@ -586,7 +586,7 @@ public abstract class Sql {
         public Update set(String name, Object value) { set.param(value).append(name+"=?"); return this; }
         public Update setExpr(String name, String expr, Object... params) { set.params(params).append(name+"="+expr); return this; }
 
-        public Update object(Object obj, String... exceptFields) {
+        public Update object(Object obj, String... exceptFields) throws SqlException {
             Set<String> excepts = new HashSet<String>(exceptFields.length);
             for (String field : exceptFields) excepts.add(field);
 
@@ -607,7 +607,7 @@ public abstract class Sql {
             return this;
         }
 
-        public Update objectField(Object obj, String... fields) {
+        public Update objectField(Object obj, String... fields) throws SqlException {
             Class<?> objClass = obj.getClass();
             try {
                 for (String field : fields) {

@@ -2,7 +2,6 @@ package fr.zenexity.dbhelper;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -29,7 +28,7 @@ public class TestingDatabase {
     }
 
     @Before
-    public void loadData() throws SQLException {
+    public void loadData() {
         jdbc = new Jdbc(initdb_HSQLMEM());
         String insertEntry = "INSERT INTO Entry (distName, version) VALUES (?, ?)";
         jdbc.executeUpdate(insertEntry, "Debian", "5.0");
@@ -40,8 +39,8 @@ public class TestingDatabase {
     }
 
     @After
-    public void closeConnection() throws SQLException {
-        jdbc.connection.close();
+    public void closeConnection() {
+        jdbc.close();
     }
 
 }

@@ -14,7 +14,7 @@ import org.junit.Test;
 public class JdbcResultTest extends TestingDatabase {
 
     @Test
-    public void testPrimitiveFactory_distName() throws SQLException {
+    public void testPrimitiveFactory_distName() {
         Set<String> distNames = new HashSet<String>();
         distNames.add("Debian");
         distNames.add("Ubuntu");
@@ -33,7 +33,7 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
-    public void testPrimitiveFactory_version() throws SQLException {
+    public void testPrimitiveFactory_version() {
         Set<String> versions = new HashSet<String>();
         versions.add("5.0");
         versions.add("9.10");
@@ -52,7 +52,7 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
-    public void testClassFactoryAutoMapping() throws SQLException {
+    public void testClassFactoryAutoMapping() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");
         linux.put("Ubuntu", "9.10");
@@ -71,7 +71,7 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
-    public void testClassFactorySelectAll() throws SQLException {
+    public void testClassFactorySelectAll() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");
         linux.put("Ubuntu", "9.10");
@@ -90,7 +90,7 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
-    public void testClassFactoryWithFields() throws SQLException {
+    public void testClassFactoryWithFields() {
         Set<String> linux = new HashSet<String>();
         linux.add("Debian");
         linux.add("Ubuntu");
@@ -148,7 +148,7 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
-    public void testClassFactoryWithoutTransientField() throws SQLException {
+    public void testClassFactoryWithoutTransientField() {
         Set<String> linux = new HashSet<String>();
         linux.add("Debian");
         linux.add("Ubuntu");
@@ -168,7 +168,7 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
-    public void testMapFactory() throws SQLException {
+    public void testMapFactory() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");
         linux.put("Ubuntu", "9.10");

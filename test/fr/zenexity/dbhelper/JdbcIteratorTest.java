@@ -1,6 +1,5 @@
 package fr.zenexity.dbhelper;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
@@ -13,7 +12,7 @@ import static org.junit.Assert.*;
 public class JdbcIteratorTest extends TestingDatabase {
 
     @Test
-    public void iterator() throws SQLException {
+    public void iterator() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");
         linux.put("Ubuntu", "9.10");
@@ -31,7 +30,7 @@ public class JdbcIteratorTest extends TestingDatabase {
     }
 
     @Test
-    public void list() throws SQLException {
+    public void list() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");
         linux.put("Ubuntu", "9.10");
@@ -49,7 +48,7 @@ public class JdbcIteratorTest extends TestingDatabase {
     }
 
     @Test
-    public void first() throws SQLException {
+    public void first() {
         JdbcStatement qs = jdbc.newStatement(Sql.selectAll().from(Entry.class).orderBy("distName"));
         JdbcIterator<Entry> it = new JdbcIterator<Entry>(qs.statement, qs.executeQuery(), JdbcResult.classFactory(Entry.class, "distName", "version"));
         Entry entry = it.first();
@@ -59,7 +58,7 @@ public class JdbcIteratorTest extends TestingDatabase {
     }
 
     @Test
-    public void firstNotFound() throws SQLException {
+    public void firstNotFound() {
         JdbcStatement qs = jdbc.newStatement(Sql.selectAll().from(Entry.class).where("distName=?","yop").orderBy("distName"));
         JdbcIterator<Entry> it = new JdbcIterator<Entry>(qs.statement, qs.executeQuery(), JdbcResult.classFactory(Entry.class, "distName", "version"));
         assertNull(it.first());
@@ -67,7 +66,7 @@ public class JdbcIteratorTest extends TestingDatabase {
     }
 
     @Test
-    public void windowIterator() throws SQLException {
+    public void windowIterator() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");
         linux.put("Mandriva", "2010");

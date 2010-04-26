@@ -21,7 +21,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     /**
      * if statement is not null then it will be closed with the ResultSet
      */
-    public JdbcIterator(Statement statement, ResultSet result, JdbcResult.Factory<T> resultFactory) {
+    public JdbcIterator(Statement statement, ResultSet result, JdbcResult.Factory<T> resultFactory) throws JdbcIteratorException {
         this.factory = resultFactory;
         this.statement = statement;
         this.result = result;
@@ -38,7 +38,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
         }
     }
 
-    public void close() {
+    public void close() throws JdbcIteratorException {
         try {
             if (result != null) {
                 next = null;
@@ -54,11 +54,11 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
         }
     }
 
-    public static void close(Iterator<?> iterator) {
+    public static void close(Iterator<?> iterator) throws JdbcIteratorException {
         if (iterator instanceof JdbcIterator<?>) ((JdbcIterator<?>)iterator).close();
     }
 
-    protected void load() {
+    protected void load() throws JdbcIteratorException {
         if (next == null && result != null) try {
             if (result.next()) next = factory.create(result);
             else close();
@@ -69,12 +69,12 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
         }
     }
 
-    public boolean hasNext() {
+    public boolean hasNext() throws JdbcIteratorException {
         load();
         return next != null;
     }
 
-    public T next() {
+    public T next() throws JdbcIteratorException {
         load();
         T e = next;
         next = null;
@@ -89,23 +89,22 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
         return this;
     }
 
-    public List<T> list() {
+    public List<T> list() throws JdbcIteratorException {
         List<T> list = new ArrayList<T>();
         for (T row : this) list.add(row);
         return list;
     }
 
-    public T first() {
+    public T first() throws JdbcIteratorException {
         T e = next();
         close();
         return e;
     }
 
     public static class Window<T> extends JdbcIterator<T> {
-
         private int size;
 
-        public Window(Statement statement, ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) {
+        public Window(Statement statement, ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) throws JdbcIteratorException {
             super(statement, result, resultFactory);
             this.size = size;
             try {
@@ -129,13 +128,12 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
         }
 
         @Override
-        protected void load() {
+        protected void load() throws JdbcIteratorException {
             if (next == null) {
                 if (size-- > 0) super.load();
                 else close();
             }
         }
-
     }
 
 }
