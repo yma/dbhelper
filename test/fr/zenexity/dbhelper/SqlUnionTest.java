@@ -19,6 +19,9 @@ public class SqlUnionTest {
     public void unionTwoElements() {
         assertEquals("(SELECT x) UNION (SELECT y)", Sql.union(Sql.select("x")).union(Sql.select("y")).toString());
         assertEquals("(SELECT x) UNION (SELECT y)", new Sql.Union().union(Sql.select("x")).union(Sql.select("y")).toString());
+
+        assertEquals("(SELECT x) UNION (SELECT y)", Sql.union(Sql.select("x"), Sql.select("y")).toString());
+        assertEquals("(SELECT x) UNION (SELECT y)", new Sql.Union().union(Sql.select("x"), Sql.select("y")).toString());
     }
 
     @Test
@@ -31,6 +34,9 @@ public class SqlUnionTest {
     public void unionAllTwoElements() {
         assertEquals("(SELECT x) UNION ALL (SELECT y)", Sql.unionAll(Sql.select("x")).unionAll(Sql.select("y")).toString());
         assertEquals("(SELECT x) UNION ALL (SELECT y)", new Sql.Union().unionAll(Sql.select("x")).unionAll(Sql.select("y")).toString());
+
+        assertEquals("(SELECT x) UNION ALL (SELECT y)", Sql.unionAll(Sql.select("x"), Sql.select("y")).toString());
+        assertEquals("(SELECT x) UNION ALL (SELECT y)", new Sql.Union().unionAll(Sql.select("x"), Sql.select("y")).toString());
     }
 
     @Test

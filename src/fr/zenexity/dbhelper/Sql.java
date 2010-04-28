@@ -418,6 +418,9 @@ public abstract class Sql {
         public Union union(Select expr) { unionSep(" UNION ", expr); return this; }
         public Union unionAll(Select expr) { unionSep(" UNION ALL ", expr); return this; }
 
+        public Union union(Select... expr) { for (Select e : expr) union(e); return this; }
+        public Union unionAll(Select... expr) { for (Select e : expr) unionAll(e); return this; }
+
         public Union orderBy(Object column) { orderBy.append(column); return this; }
         public Union orderBy(Object... columns) { orderBy.add(columns); return this; }
 
@@ -751,7 +754,9 @@ public abstract class Sql {
 
     public static Union union() { return new Union(); }
     public static Union union(Select expr) { return new Union().union(expr); }
+    public static Union union(Select... expr) { return new Union().union(expr); }
     public static Union unionAll(Select expr) { return new Union().unionAll(expr); }
+    public static Union unionAll(Select... expr) { return new Union().unionAll(expr); }
 
     public static Insert insert() { return new Insert(); }
     public static Insert insert(String table) { return new Insert().into(table); }
