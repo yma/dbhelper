@@ -112,6 +112,12 @@ public class JdbcStatement {
         }
     }
 
+    public int executeUpdate(Object... params) throws JdbcStatementException {
+        reset();
+        params(params);
+        return executeUpdate();
+    }
+
     public void close() throws JdbcStatementException {
         try {
             statement.close();

@@ -27,15 +27,11 @@ public class JdbcResult {
 
 
     public static <T> boolean primitive(Class<T> objectClass) {
-        return objectClass == String.class
-            || objectClass == Integer.class
-            || objectClass == Float.class
-            || objectClass == Double.class
-            || objectClass == Long.class
-            || objectClass == Short.class
-            || objectClass == Byte.class
-            || objectClass == Character.class
-            || objectClass == Boolean.class;
+        return objectClass.isPrimitive()
+            || Number.class.isAssignableFrom(objectClass)
+            || String.class.isAssignableFrom(objectClass)
+            || Character.class.isAssignableFrom(objectClass)
+            || Boolean.class.isAssignableFrom(objectClass);
     }
 
     public static <T> Factory<T> buildFactory(Class<T> objectClass) {
@@ -57,16 +53,16 @@ public class JdbcResult {
     }
 
 
-    public static <T> PrimitiveFactory<T> primitiveFactory(@SuppressWarnings("unused") Class<T> objectClass) {
-        return new PrimitiveFactory<T>(null);
+    public static <T> PrimitiveFactory<T> primitiveFactory(Class<T> objectClass) {
+        return new PrimitiveFactory<T>(objectClass, null);
     }
 
-    public static <T> PrimitiveFactory<T> primitiveFactory(@SuppressWarnings("unused") Class<T> objectClass, int columnIndex) {
-        return new PrimitiveFactory<T>(columnIndex);
+    public static <T> PrimitiveFactory<T> primitiveFactory(Class<T> objectClass, int columnIndex) {
+        return new PrimitiveFactory<T>(objectClass, columnIndex);
     }
 
-    public static <T> PrimitiveFactory<T> primitiveFactory(@SuppressWarnings("unused") Class<T> objectClass, String field) {
-        return new PrimitiveFactory<T>(field);
+    public static <T> PrimitiveFactory<T> primitiveFactory(Class<T> objectClass, String field) {
+        return new PrimitiveFactory<T>(objectClass, field);
     }
 
 
@@ -88,16 +84,44 @@ public class JdbcResult {
     }
 
 
+    public static Object normalizeValue(Object value) {
+        if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
+        return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T castValue(Class<T> clazz, Object value) {
+        value = normalizeValue(value);
+
+        //TODO cast to primitive types
+        if (clazz.isPrimitive()) {
+            return (T) value;
+        }
+
+        if (clazz.isEnum()) {
+            if (value instanceof Number) {
+                value = clazz.getEnumConstants()[((Number)value).intValue()];
+            } else if (value instanceof String) {
+                value = Enum.valueOf((Class)clazz, (String)value);
+            }
+        }
+
+        return clazz.cast(value);
+    }
+
     public static class PrimitiveFactory<T> implements Factory<T> {
+        private final Class<T> objectClass;
         private final String field;
         private int columnIndex;
 
-        public PrimitiveFactory(int columnIndex) {
+        public PrimitiveFactory(Class<T> objectClass, int columnIndex) {
+            this.objectClass = objectClass;
             this.field = null;
             this.columnIndex = columnIndex;
         }
 
-        public PrimitiveFactory(String field) {
+        public PrimitiveFactory(Class<T> objectClass, String field) {
+            this.objectClass = objectClass;
             this.field = field;
             this.columnIndex = 1;
         }
@@ -116,11 +140,8 @@ public class JdbcResult {
             }
         }
 
-        @SuppressWarnings("unchecked")
         public T create(ResultSet result) throws SQLException {
-            Object value = result.getObject(columnIndex);
-            if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
-            return (T) value;
+            return castValue(objectClass, result.getObject(columnIndex));
         }
     }
 
@@ -188,8 +209,7 @@ public class JdbcResult {
                 T obj = objectClass.newInstance();
                 for (ColumnInfo column : columns) {
                     Object value = result.getObject(column.index);
-                    if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
-                    column.field.set(obj, value);
+                    column.field.set(obj, castValue(column.field.getType(), value));
                 }
                 return obj;
             } catch (SQLException e) {
@@ -234,8 +254,7 @@ public class JdbcResult {
             Map<String, Object> map = new FieldHashMap();
             for (ColumnInfo column : columns) {
                 Object value = result.getObject(column.index);
-                if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
-                map.put(column.name, value);
+                map.put(column.name, normalizeValue(value));
             }
             return map;
         }
