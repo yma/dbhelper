@@ -80,6 +80,8 @@ public class SqlSelectTest {
         assertEquals("JOIN x JOIN y", Sql.select().join("x").join("y").toString());
         assertEquals("JOIN x ON i", Sql.select().join("x", Sql.where("i")).toString());
         assertEquals("JOIN x ON i JOIN y ON j", Sql.select().join("x", Sql.where("i")).join("y", Sql.where("j")).toString());
+        SqlTest.assertQuery(Sql.select().join("x", Sql.where("i")).join("y", Sql.where("j")), "JOIN x ON i JOIN y ON j");
+        SqlTest.assertQuery(Sql.select().join("x", Sql.where("i", 1)).join("y", Sql.where("j", 2)), "JOIN x ON i JOIN y ON j", 1, 2);
     }
 
     @Test
@@ -88,6 +90,8 @@ public class SqlSelectTest {
         assertEquals("INNER JOIN x INNER JOIN y", Sql.select().innerJoin("x").innerJoin("y").toString());
         assertEquals("INNER JOIN x ON i", Sql.select().innerJoin("x", Sql.where("i")).toString());
         assertEquals("INNER JOIN x ON i INNER JOIN y ON j", Sql.select().innerJoin("x", Sql.where("i")).innerJoin("y", Sql.where("j")).toString());
+        SqlTest.assertQuery(Sql.select().innerJoin("x", Sql.where("i")).innerJoin("y", Sql.where("j")), "INNER JOIN x ON i INNER JOIN y ON j");
+        SqlTest.assertQuery(Sql.select().innerJoin("x", Sql.where("i", 1)).innerJoin("y", Sql.where("j", 2)), "INNER JOIN x ON i INNER JOIN y ON j", 1, 2);
     }
 
     @Test
@@ -96,6 +100,8 @@ public class SqlSelectTest {
         assertEquals("LEFT JOIN x LEFT JOIN y", Sql.select().leftJoin("x").leftJoin("y").toString());
         assertEquals("LEFT JOIN x ON i", Sql.select().leftJoin("x", Sql.where("i")).toString());
         assertEquals("LEFT JOIN x ON i LEFT JOIN y ON j", Sql.select().leftJoin("x", Sql.where("i")).leftJoin("y", Sql.where("j")).toString());
+        SqlTest.assertQuery(Sql.select().leftJoin("x", Sql.where("i")).leftJoin("y", Sql.where("j")), "LEFT JOIN x ON i LEFT JOIN y ON j");
+        SqlTest.assertQuery(Sql.select().leftJoin("x", Sql.where("i", 1)).leftJoin("y", Sql.where("j", 2)), "LEFT JOIN x ON i LEFT JOIN y ON j", 1, 2);
     }
 
     @Test

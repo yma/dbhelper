@@ -192,6 +192,10 @@ public abstract class Sql {
         public List<Object> paramsList() {
             return new ArrayList<Object>(query.params);
         }
+
+        public Object[] paramsArray() {
+            return query.params.toArray();
+        }
     }
 
     public interface Query {
@@ -334,11 +338,11 @@ public abstract class Sql {
         public Select from(Class<?>... classes) { for (Class<?> clazz : classes) from.append(clazz.getSimpleName()); return this; }
 
         public Select join(String expr, Object... params) { join.params(params).localPrefix("JOIN ").separator(" JOIN ").append(expr); return this; }
-        public Select join(String table, Where on) { return join(table +" ON "+ on.value(), on.params()); }
+        public Select join(String table, Where on) { return join(table +" ON "+ on.value(), on.paramsArray()); }
         public Select innerJoin(String expr, Object... params) { join.params(params).localPrefix("INNER JOIN ").separator(" INNER JOIN ").append(expr); return this; }
-        public Select innerJoin(String table, Where on) { return innerJoin(table +" ON "+ on.value(), on.params()); }
+        public Select innerJoin(String table, Where on) { return innerJoin(table +" ON "+ on.value(), on.paramsArray()); }
         public Select leftJoin(String expr, Object... params) { join.params(params).localPrefix("LEFT JOIN ").separator(" LEFT JOIN ").append(expr); return this; }
-        public Select leftJoin(String table, Where on) { return leftJoin(table +" ON "+ on.value(), on.params()); }
+        public Select leftJoin(String table, Where on) { return leftJoin(table +" ON "+ on.value(), on.paramsArray()); }
 
         public Select where(String expr, Object... params) { return andWhere(expr, params); }
         public Select where(Where expr) { return andWhere(expr); }
