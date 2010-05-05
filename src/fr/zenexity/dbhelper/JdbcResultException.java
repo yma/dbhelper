@@ -6,4 +6,8 @@ public class JdbcResultException extends Exception {
         super(cause);
     }
 
+    public JdbcResultException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

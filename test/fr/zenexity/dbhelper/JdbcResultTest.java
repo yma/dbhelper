@@ -113,10 +113,17 @@ public class JdbcResultTest extends TestingDatabase {
         assertEquals(0, nums.size());
     }
 
-    @Test(expected=ClassCastException.class)
+    @Test
     public void testPrimitiveFactory_num_badType() {
-        Sql.Select query = Sql.selectAll().from(Entry.class);
-        jdbc.execute(query, JdbcResult.primitiveFactory(Float.class, "num")).first();
+        try {
+            Sql.Select query = Sql.selectAll().from(Entry.class);
+            jdbc.execute(query, JdbcResult.primitiveFactory(Float.class, "num")).first();
+            fail("JdbcIteratorException expected");
+        } catch (JdbcIteratorException e) {
+            assertEquals(JdbcResultException.class, e.getCause().getClass());
+            assertEquals("num[3]: 5.0 (java.lang.Double) to java.lang.Float", e.getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+        }
     }
 
     @Test(expected=ClassCastException.class)
@@ -246,10 +253,17 @@ public class JdbcResultTest extends TestingDatabase {
         assertEquals(0, linux.size());
     }
 
-    @Test(expected=JdbcIteratorException.class)
+    @Test
     public void testClassFactorySelectAllWithCastError() {
-        Sql.Select query = Sql.select("num").from(Entry.class);
-        jdbc.execute(query, JdbcResult.classFactory(BadCastedEntry.class)).first();
+        try {
+            Sql.Select query = Sql.select("num").from(Entry.class);
+            jdbc.execute(query, JdbcResult.classFactory(BadCastedEntry.class)).first();
+            fail("JdbcIteratorException expected");
+        } catch (JdbcIteratorException e) {
+            assertEquals(JdbcResultException.class, e.getCause().getClass());
+            assertEquals("num[1]: 5.0 (java.lang.Double) to java.lang.Float", e.getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+        }
     }
 
     @Test

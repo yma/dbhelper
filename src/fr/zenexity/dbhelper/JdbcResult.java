@@ -90,23 +90,27 @@ public class JdbcResult {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T castValue(Class<T> clazz, Object value) {
-        value = normalizeValue(value);
+    public static <T> T castValue(Class<T> clazz, Object value) throws JdbcResultException {
+        try {
+            value = normalizeValue(value);
 
-        //TODO cast to primitive types
-        if (clazz.isPrimitive()) {
-            return (T) value;
-        }
-
-        if (clazz.isEnum()) {
-            if (value instanceof Number) {
-                value = clazz.getEnumConstants()[((Number)value).intValue()];
-            } else if (value instanceof String) {
-                value = Enum.valueOf((Class)clazz, (String)value);
+            //TODO cast to primitive types
+            if (clazz.isPrimitive()) {
+                return (T) value;
             }
-        }
 
-        return clazz.cast(value);
+            if (clazz.isEnum()) {
+                if (value instanceof Number) {
+                    value = clazz.getEnumConstants()[((Number)value).intValue()];
+                } else if (value instanceof String) {
+                    value = Enum.valueOf((Class)clazz, (String)value);
+                }
+            }
+
+            return clazz.cast(value);
+        } catch (Exception e) {
+            throw new JdbcResultException(value+" ("+value.getClass().getName()+") to "+clazz.getName(), e);
+        }
     }
 
     public static class PrimitiveFactory<T> implements Factory<T> {
@@ -140,8 +144,16 @@ public class JdbcResult {
             }
         }
 
-        public T create(ResultSet result) throws SQLException {
-            return castValue(objectClass, result.getObject(columnIndex));
+        public T create(ResultSet result) throws SQLException, JdbcResultException {
+            try {
+                return castValue(objectClass, result.getObject(columnIndex));
+            } catch (SQLException e) {
+                throw e;
+            } catch (JdbcResultException e) {
+                throw new JdbcResultException(field+"["+columnIndex+"]: "+e.getMessage(), e.getCause());
+            } catch (Exception e) {
+                throw new JdbcResultException(e);
+            }
         }
     }
 
@@ -205,15 +217,20 @@ public class JdbcResult {
         }
 
         public T create(ResultSet result) throws SQLException, JdbcResultException {
+            ColumnInfo currentColumn = null;
             try {
                 T obj = objectClass.newInstance();
                 for (ColumnInfo column : columns) {
+                    currentColumn = column;
                     Object value = result.getObject(column.index);
                     column.field.set(obj, castValue(column.field.getType(), value));
                 }
                 return obj;
             } catch (SQLException e) {
                 throw e;
+            } catch (JdbcResultException e) {
+                if (currentColumn == null) throw e;
+                throw new JdbcResultException(currentColumn.field.getName()+"["+currentColumn.index+"]: "+e.getMessage(), e.getCause());
             } catch (Exception e) {
                 throw new JdbcResultException(e);
             }
@@ -250,11 +267,17 @@ public class JdbcResult {
             }
         }
 
-        public Map<String, Object> create(ResultSet result) throws SQLException {
+        public Map<String, Object> create(ResultSet result) throws SQLException, JdbcResultException {
             Map<String, Object> map = new FieldHashMap();
-            for (ColumnInfo column : columns) {
-                Object value = result.getObject(column.index);
-                map.put(column.name, normalizeValue(value));
+            try {
+                for (ColumnInfo column : columns) {
+                    Object value = result.getObject(column.index);
+                    map.put(column.name, normalizeValue(value));
+                }
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new JdbcResultException(e);
             }
             return map;
         }
