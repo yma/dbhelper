@@ -219,6 +219,11 @@ public abstract class Sql {
             params = src.copyParams();
         }
 
+        public FinalQuery(String src) {
+            query = src;
+            params = new ArrayList<Object>();
+        }
+
         public FinalQuery(Query src, Object param) {
             this(src);
             this.params.add(param);
@@ -255,6 +260,11 @@ public abstract class Sql {
         public FinalUpdateQuery(UpdateQuery src) {
             query = src.toString();
             params = src.copyParams();
+        }
+
+        public FinalUpdateQuery(String src) {
+            query = src;
+            params = new ArrayList<Object>();
         }
 
         public FinalUpdateQuery(UpdateQuery src, Object param) {

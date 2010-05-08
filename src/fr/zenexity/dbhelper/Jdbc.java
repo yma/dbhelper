@@ -159,4 +159,8 @@ public class Jdbc {
         return result;
     }
 
+    public void execute(SqlScript script) throws JdbcStatementException {
+        for (Sql.FinalUpdateQuery query : script) execute(query);
+    }
+
 }
