@@ -39,11 +39,13 @@ public class SqlSelectTest {
     }
 
     @Test
-    public void selectAll() {
-        assertEquals("SELECT *", Sql.selectAll().toString());
-        assertEquals("SELECT *, *", Sql.selectAll().selectAll().toString());
-        assertEquals("SELECT *", new Sql.Select().selectAll().toString());
-        assertEquals("SELECT *, *", new Sql.Select().selectAll().selectAll().toString());
+    public void selectAllDistinct() {
+        assertEquals("SELECT ALL x", Sql.select("x").all().toString());
+        assertEquals("SELECT DISTINCT x", Sql.select("x").distinct().toString());
+        assertEquals("SELECT ALL x", Sql.select().all().select("x").toString());
+        assertEquals("SELECT DISTINCT x", Sql.select().distinct().select("x").toString());
+        assertEquals("SELECT ALL x", Sql.select().distinct().select("x").all().toString());
+        assertEquals("SELECT DISTINCT x", Sql.select().all().select("x").distinct().toString());
     }
 
     @Test
@@ -190,8 +192,8 @@ public class SqlSelectTest {
 
     @Test
     public void trim() {
-        assertEquals("SELECT * FROM table", Sql.selectAll().from("table").toString());
-        assertEquals("SELECT * FROM table GROUP BY a", Sql.selectAll().from("table").groupBy("a").toString());
+        assertEquals("SELECT * FROM table", Sql.select("*").from("table").toString());
+        assertEquals("SELECT * FROM table GROUP BY a", Sql.select("*").from("table").groupBy("a").toString());
     }
 
     @Test

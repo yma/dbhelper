@@ -338,9 +338,11 @@ public abstract class Sql {
             limit = new Concat(src.limit);
         }
 
+        public Select all() { select.prefix = "SELECT ALL "; return this; }
+        public Select distinct() { select.prefix = "SELECT DISTINCT "; return this; }
+
         public Select select(Object expression) { select.append(expression); return this; }
         public Select select(Object... expressions) { select.add(expressions); return this; }
-        public Select selectAll() { select.append("*"); return this; }
 
         public Select from(String table) { from.append(table); return this; }
         public Select from(String... tables) { from.add((Object[])tables); return this; }
@@ -758,7 +760,6 @@ public abstract class Sql {
     }
 
     public static Select select() { return new Select(); }
-    public static Select selectAll() { return new Select().selectAll(); }
     public static Select select(Object column) { return new Select().select(column); }
     public static Select select(Object... columns) { return new Select().select(columns); }
     public static Select from(String table) { return new Select().from(table); }

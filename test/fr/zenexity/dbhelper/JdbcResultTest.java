@@ -46,7 +46,7 @@ public class JdbcResultTest extends TestingDatabase {
         distNames.add("Mandriva");
         distNames.add("Slackware");
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (String distName : jdbc.execute(query, JdbcResult.primitiveFactory(String.class, "distName"))) {
             assertTrue(distNames.contains(distName));
@@ -65,7 +65,7 @@ public class JdbcResultTest extends TestingDatabase {
         versions.add("2010");
         versions.add("13.0");
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (String version : jdbc.execute(query, JdbcResult.primitiveFactory(String.class, "version"))) {
             assertTrue(versions.contains(version));
@@ -84,7 +84,7 @@ public class JdbcResultTest extends TestingDatabase {
         nums.add(2010.0);
         nums.add(13.0);
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (Double num : jdbc.execute(query, JdbcResult.primitiveFactory(Double.class, "num"))) {
             assertTrue(nums.contains(num));
@@ -103,7 +103,7 @@ public class JdbcResultTest extends TestingDatabase {
         nums.add(2010.0);
         nums.add(13.0);
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (double num : jdbc.execute(query, JdbcResult.primitiveFactory(double.class, "num"))) {
             assertTrue(nums.contains(num));
@@ -116,7 +116,7 @@ public class JdbcResultTest extends TestingDatabase {
     @Test
     public void testPrimitiveFactory_num_badType() {
         try {
-            Sql.Select query = Sql.selectAll().from(Entry.class);
+            Sql.Select query = Sql.select("*").from(Entry.class);
             jdbc.execute(query, JdbcResult.primitiveFactory(Float.class, "num")).first();
             fail("JdbcIteratorException expected");
         } catch (JdbcIteratorException e) {
@@ -128,7 +128,7 @@ public class JdbcResultTest extends TestingDatabase {
 
     @Test(expected=ClassCastException.class)
     public void testPrimitivePrimitiveFactory_num_badType() {
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
         jdbc.execute(query, JdbcResult.primitiveFactory(float.class, "num")).first().getClass();
     }
 
@@ -141,7 +141,7 @@ public class JdbcResultTest extends TestingDatabase {
         types.add(Entry.DistType.MANDRIVA);
         types.add(Entry.DistType.SLACKWARE);
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (Entry.DistType type : jdbc.execute(query, JdbcResult.primitiveFactory(Entry.DistType.class, "typeName"))) {
             assertTrue(types.contains(type));
@@ -160,7 +160,7 @@ public class JdbcResultTest extends TestingDatabase {
         types.add(Entry.DistType.MANDRIVA);
         types.add(Entry.DistType.SLACKWARE);
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (Entry.DistType type : jdbc.execute(query, JdbcResult.primitiveFactory(Entry.DistType.class, "typeOrdinal"))) {
             assertTrue(types.contains(type));
@@ -198,7 +198,7 @@ public class JdbcResultTest extends TestingDatabase {
         linux.put("Mandriva", "2010");
         linux.put("Slackware", "13.0");
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (Entry entry : jdbc.execute(query, JdbcResult.classFactory(Entry.class))) {
             assertEquals(linux.get(entry.distName), entry.version);
@@ -210,7 +210,7 @@ public class JdbcResultTest extends TestingDatabase {
 
     @Test(expected=JdbcStatementException.class)
     public void testClassFactorySelectAllTooManyColumns() {
-        Sql.Select query = Sql.selectAll().from(TinyEntry.class);
+        Sql.Select query = Sql.select("*").from(TinyEntry.class);
         jdbc.execute(query, JdbcResult.classFactory(TinyEntry.class));
     }
 
@@ -242,7 +242,7 @@ public class JdbcResultTest extends TestingDatabase {
         linux.put("Mandriva", Entry.DistType.MANDRIVA);
         linux.put("Slackware", Entry.DistType.SLACKWARE);
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (Entry entry : jdbc.execute(query, JdbcResult.classFactory(Entry.class))) {
             assertEquals(linux.get(entry.distName), entry.typeName);
@@ -353,7 +353,7 @@ public class JdbcResultTest extends TestingDatabase {
         linux.put("Mandriva", "2010");
         linux.put("Slackware", "13.0");
 
-        Sql.Select query = Sql.selectAll().from(Entry.class);
+        Sql.Select query = Sql.select("*").from(Entry.class);
 
         for (Map<String, Object> entry : jdbc.execute(query, JdbcResult.mapFactory())) {
             assertEquals(linux.get(entry.get("distName")), entry.get("version"));

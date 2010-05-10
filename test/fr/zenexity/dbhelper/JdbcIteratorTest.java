@@ -20,7 +20,7 @@ public class JdbcIteratorTest extends TestingDatabase {
         linux.put("Mandriva", "2010");
         linux.put("Slackware", "13.0");
 
-        JdbcStatement qs = jdbc.newStatement(Sql.selectAll().from(Entry.class));
+        JdbcStatement qs = jdbc.newStatement(Sql.select("*").from(Entry.class));
         for (Entry entry : new JdbcIterator<Entry>(qs.statement, qs.executeQuery(), JdbcResult.classFactory(Entry.class, "distName", "version"))) {
             assertEquals(linux.get(entry.distName), entry.version);
             linux.remove(entry.distName);
@@ -38,7 +38,7 @@ public class JdbcIteratorTest extends TestingDatabase {
         linux.put("Mandriva", "2010");
         linux.put("Slackware", "13.0");
 
-        JdbcStatement qs = jdbc.newStatement(Sql.selectAll().from(Entry.class));
+        JdbcStatement qs = jdbc.newStatement(Sql.select("*").from(Entry.class));
         for (Entry entry : new JdbcIterator<Entry>(qs.statement, qs.executeQuery(), JdbcResult.classFactory(Entry.class, "distName", "version")).list()) {
             assertEquals(linux.get(entry.distName), entry.version);
             linux.remove(entry.distName);
@@ -49,7 +49,7 @@ public class JdbcIteratorTest extends TestingDatabase {
 
     @Test
     public void first() {
-        JdbcStatement qs = jdbc.newStatement(Sql.selectAll().from(Entry.class).orderBy("distName"));
+        JdbcStatement qs = jdbc.newStatement(Sql.select("*").from(Entry.class).orderBy("distName"));
         JdbcIterator<Entry> it = new JdbcIterator<Entry>(qs.statement, qs.executeQuery(), JdbcResult.classFactory(Entry.class, "distName", "version"));
         Entry entry = it.first();
         assertEquals("Debian", entry.distName);
@@ -59,7 +59,7 @@ public class JdbcIteratorTest extends TestingDatabase {
 
     @Test
     public void firstNotFound() {
-        JdbcStatement qs = jdbc.newStatement(Sql.selectAll().from(Entry.class).where("distName=?","yop").orderBy("distName"));
+        JdbcStatement qs = jdbc.newStatement(Sql.select("*").from(Entry.class).where("distName=?","yop").orderBy("distName"));
         JdbcIterator<Entry> it = new JdbcIterator<Entry>(qs.statement, qs.executeQuery(), JdbcResult.classFactory(Entry.class, "distName", "version"));
         assertNull(it.first());
         assertFalse(it.hasNext());
@@ -72,7 +72,7 @@ public class JdbcIteratorTest extends TestingDatabase {
         linux.put("Mandriva", "2010");
         linux.put("Slackware", "13.0");
 
-        JdbcStatement qs = jdbc.newStatement(Sql.selectAll().from(Entry.class).orderBy("version"));
+        JdbcStatement qs = jdbc.newStatement(Sql.select("*").from(Entry.class).orderBy("version"));
         for (Entry entry : new JdbcIterator.Window<Entry>(qs.statement, qs.executeQuery(), 1, 3, JdbcResult.classFactory(Entry.class, "distName", "version"))) {
             assertEquals(linux.get(entry.distName), entry.version);
             linux.remove(entry.distName);
