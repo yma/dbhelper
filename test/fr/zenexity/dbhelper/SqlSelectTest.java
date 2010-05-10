@@ -77,6 +77,16 @@ public class SqlSelectTest {
     }
 
     @Test
+    public void fromSelect() {
+        Sql.Select subquery1 = Sql.select("a").where("b", 1);
+        Sql.Select subquery2 = Sql.select("c").where("d", 2);
+        SqlTest.assertQuery(Sql.from(subquery1, "sq1"), "FROM (SELECT a WHERE b) AS sq1", 1);
+        SqlTest.assertQuery(Sql.from(subquery1, "sq1").from(subquery2, "sq2"), "FROM (SELECT a WHERE b) AS sq1, (SELECT c WHERE d) AS sq2", 1, 2);
+        SqlTest.assertQuery(new Sql.Select().from(subquery1, "sq1"), "FROM (SELECT a WHERE b) AS sq1", 1);
+        SqlTest.assertQuery(new Sql.Select().from(subquery1, "sq1").from(subquery2, "sq2"), "FROM (SELECT a WHERE b) AS sq1, (SELECT c WHERE d) AS sq2", 1, 2);
+    }
+
+    @Test
     public void join() {
         assertEquals("JOIN x", Sql.select().join("x").toString());
         assertEquals("JOIN x JOIN y", Sql.select().join("x").join("y").toString());

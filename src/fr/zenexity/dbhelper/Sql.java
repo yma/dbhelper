@@ -298,7 +298,7 @@ public abstract class Sql {
 
     public static final class Select implements Query {
         private final Concat select;
-        private final Concat from;
+        private final ConcatWithParams from;
         private final ConcatWithParams join;
         public final Where where;
         private final Concat groupBy;
@@ -310,7 +310,7 @@ public abstract class Sql {
         public Select() {
             select = new Concat("SELECT ", ", ");
             select.defaultValue(null);
-            from = new Concat("FROM ", ", ");
+            from = new ConcatWithParams("FROM ", ", ");
             from.defaultValue(null);
             join = new ConcatWithParams("", null);
             join.defaultValue(null);
@@ -328,7 +328,7 @@ public abstract class Sql {
 
         public Select(Select src) {
             select = new Concat(src.select);
-            from = new Concat(src.from);
+            from = new ConcatWithParams(src.from);
             join = new ConcatWithParams(src.join);
             where = new Where(src.where);
             groupBy = new Concat(src.groupBy);
@@ -348,6 +348,7 @@ public abstract class Sql {
         public Select from(String... tables) { from.add((Object[])tables); return this; }
         public Select from(Class<?> clazz) { from.append(clazz.getSimpleName()); return this; }
         public Select from(Class<?>... classes) { for (Class<?> clazz : classes) from.append(clazz.getSimpleName()); return this; }
+        public Select from(Select subquery, String name) { from.paramsList(subquery.params()).append("(" + subquery + ") AS " + name); return this; }
 
         public Select join(String expr, Object... params) { join.params(params).localPrefix("JOIN ").separator(" JOIN ").append(expr); return this; }
         public Select join(String table, Where on) { return join(table +" ON "+ on.value(), on.paramsArray()); }
@@ -397,6 +398,7 @@ public abstract class Sql {
 
         public List<Object> copyParams() {
             List<Object> list = new ArrayList<Object>();
+            list.addAll(from.params);
             list.addAll(join.params);
             for (Object whereParam : where.params()) list.add(whereParam);
             list.addAll(having.params);
@@ -766,6 +768,7 @@ public abstract class Sql {
     public static Select from(String... tables) { return new Select().from(tables); }
     public static Select from(Class<?> clazz) { return new Select().from(clazz); }
     public static Select from(Class<?>... classes) { return new Select().from(classes); }
+    public static Select from(Select subquery, String name) { return new Select().from(subquery, name); }
 
     public static Union union() { return new Union(); }
     public static Union union(Select expr) { return new Union().union(expr); }
