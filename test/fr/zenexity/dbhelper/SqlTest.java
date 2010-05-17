@@ -2,9 +2,7 @@ package fr.zenexity.dbhelper;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import org.junit.Test;
 
 /**
@@ -129,6 +127,16 @@ public class SqlTest {
     }
 
     @Test
+    public void table() {
+        assertEquals("table", Sql.table("table"));
+        assertEquals("table", Sql.table("table", null));
+        assertEquals("table AS t", Sql.table("table", "t"));
+        assertEquals("Select", Sql.table(Sql.Select.class));
+        assertEquals("Select", Sql.table(Sql.Select.class, null));
+        assertEquals("Select AS t", Sql.table(Sql.Select.class, "t"));
+    }
+
+    @Test
     public void quote() {
         assertEquals("'Hello World'", Sql.quote("Hello World"));
         assertEquals("'Hello \\'World\\''", Sql.quote("Hello 'World'"));
@@ -143,10 +151,8 @@ public class SqlTest {
         assertEquals("('Hello', 'cool', 'World')", Sql.inlineParam(new String[] {"Hello", "cool", "World"}));
         assertEquals("(1)", Sql.inlineParam(new Integer[] {1}));
         assertEquals("", Sql.inlineParam(new Integer[] {}));
-
-        List<Integer> list = new ArrayList<Integer>();
-        for (int i = 0; i < 3; i++) list.add(i);
-        assertEquals("(0, 1, 2)", Sql.inlineParam(list));
+        assertEquals("(0, 1, 2)", Sql.inlineParam(Arrays.asList(0, 1, 2)));
+        assertEquals("(1, 2, 3)", Sql.inlineParam(new int[] {1, 2, 3}));
     }
 
 }

@@ -87,31 +87,43 @@ public class SqlSelectTest {
     }
 
     @Test
-    public void join() {
-        assertEquals("JOIN x", Sql.select().join("x").toString());
-        assertEquals("JOIN x JOIN y", Sql.select().join("x").join("y").toString());
-        assertEquals("JOIN x ON i", Sql.select().join("x", Sql.where("i")).toString());
-        assertEquals("JOIN x ON i JOIN y ON j", Sql.select().join("x", Sql.where("i")).join("y", Sql.where("j")).toString());
+    public void joinExpr() {
+        SqlTest.assertQuery(Sql.select().join("x"), "JOIN x");
+        SqlTest.assertQuery(Sql.select().join("x").join("y"), "JOIN x JOIN y");
+        SqlTest.assertQuery(Sql.select().join("x", 1).join("y", 2), "JOIN x JOIN y", 1, 2);
+    }
+
+    @Test
+    public void joinWhere() {
+        SqlTest.assertQuery(Sql.select().join("x", Sql.where("i")), "JOIN x ON i");
         SqlTest.assertQuery(Sql.select().join("x", Sql.where("i")).join("y", Sql.where("j")), "JOIN x ON i JOIN y ON j");
         SqlTest.assertQuery(Sql.select().join("x", Sql.where("i", 1)).join("y", Sql.where("j", 2)), "JOIN x ON i JOIN y ON j", 1, 2);
     }
 
     @Test
-    public void innerJoin() {
-        assertEquals("INNER JOIN x", Sql.select().innerJoin("x").toString());
-        assertEquals("INNER JOIN x INNER JOIN y", Sql.select().innerJoin("x").innerJoin("y").toString());
-        assertEquals("INNER JOIN x ON i", Sql.select().innerJoin("x", Sql.where("i")).toString());
-        assertEquals("INNER JOIN x ON i INNER JOIN y ON j", Sql.select().innerJoin("x", Sql.where("i")).innerJoin("y", Sql.where("j")).toString());
+    public void innerJoinExpr() {
+        SqlTest.assertQuery(Sql.select().innerJoin("x"), "INNER JOIN x");
+        SqlTest.assertQuery(Sql.select().innerJoin("x").innerJoin("y"), "INNER JOIN x INNER JOIN y");
+        SqlTest.assertQuery(Sql.select().innerJoin("x", 1).innerJoin("y", 2), "INNER JOIN x INNER JOIN y", 1, 2);
+    }
+
+    @Test
+    public void innerJoinWhere() {
+        SqlTest.assertQuery(Sql.select().innerJoin("x", Sql.where("i")), "INNER JOIN x ON i");
         SqlTest.assertQuery(Sql.select().innerJoin("x", Sql.where("i")).innerJoin("y", Sql.where("j")), "INNER JOIN x ON i INNER JOIN y ON j");
         SqlTest.assertQuery(Sql.select().innerJoin("x", Sql.where("i", 1)).innerJoin("y", Sql.where("j", 2)), "INNER JOIN x ON i INNER JOIN y ON j", 1, 2);
     }
 
     @Test
-    public void leftJoin() {
-        assertEquals("LEFT JOIN x", Sql.select().leftJoin("x").toString());
-        assertEquals("LEFT JOIN x LEFT JOIN y", Sql.select().leftJoin("x").leftJoin("y").toString());
-        assertEquals("LEFT JOIN x ON i", Sql.select().leftJoin("x", Sql.where("i")).toString());
-        assertEquals("LEFT JOIN x ON i LEFT JOIN y ON j", Sql.select().leftJoin("x", Sql.where("i")).leftJoin("y", Sql.where("j")).toString());
+    public void leftJoinExpr() {
+        SqlTest.assertQuery(Sql.select().leftJoin("x"), "LEFT JOIN x");
+        SqlTest.assertQuery(Sql.select().leftJoin("x").leftJoin("y"), "LEFT JOIN x LEFT JOIN y");
+        SqlTest.assertQuery(Sql.select().leftJoin("x", 1).leftJoin("y", 2), "LEFT JOIN x LEFT JOIN y", 1, 2);
+    }
+
+    @Test
+    public void leftJoinWhere() {
+        SqlTest.assertQuery(Sql.select().leftJoin("x", Sql.where("i")), "LEFT JOIN x ON i");
         SqlTest.assertQuery(Sql.select().leftJoin("x", Sql.where("i")).leftJoin("y", Sql.where("j")), "LEFT JOIN x ON i LEFT JOIN y ON j");
         SqlTest.assertQuery(Sql.select().leftJoin("x", Sql.where("i", 1)).leftJoin("y", Sql.where("j", 2)), "LEFT JOIN x ON i LEFT JOIN y ON j", 1, 2);
     }

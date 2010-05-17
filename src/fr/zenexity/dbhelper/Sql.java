@@ -1,5 +1,6 @@
 package fr.zenexity.dbhelper;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -764,6 +765,8 @@ public abstract class Sql {
     public static Select select() { return new Select(); }
     public static Select select(Object column) { return new Select().select(column); }
     public static Select select(Object... columns) { return new Select().select(columns); }
+    public static Select selectDistinct(Object column) { return new Select().distinct().select(column); }
+    public static Select selectDistinct(Object... columns) { return new Select().distinct().select(columns); }
     public static Select from(String table) { return new Select().from(table); }
     public static Select from(String... tables) { return new Select().from(tables); }
     public static Select from(Class<?> clazz) { return new Select().from(clazz); }
@@ -815,6 +818,24 @@ public abstract class Sql {
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object... params) { return new FinalUpdateQuery(src, params); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Iterable<?> params) { return new FinalUpdateQuery(src, params); }
 
+    public static String table(String name) {
+        return name;
+    }
+
+    public static String table(Class<?> clazz) {
+        return clazz.getSimpleName();
+    }
+
+    public static String table(String name, String alias) {
+        String table = name;
+        if (alias != null) table += " AS "+ alias;
+        return table;
+    }
+
+    public static String table(Class<?> clazz, String alias) {
+        return table(clazz.getSimpleName(), alias);
+    }
+
     public static String quote(String str) {
         return "'" + str.replace("'","\\'") + "'";
     }
@@ -828,9 +849,10 @@ public abstract class Sql {
             Concat list = new Concat("(", ", ", ")");
             for (Object p : (Iterable<?>)param) list.append(inlineParam(p));
             str = list.toString();
-        } else if (param instanceof Object[]) {
+        } else if (param.getClass().isArray()) {
             Concat list = new Concat("(", ", ", ")");
-            for (Object p : (Object[])param) list.append(inlineParam(p));
+            int len = Array.getLength(param);
+            for (int i = 0; i < len; i++) list.append(inlineParam(Array.get(param, i)));
             str = list.toString();
         } else if (param instanceof Enum<?>) {
             str = quote(param.toString());

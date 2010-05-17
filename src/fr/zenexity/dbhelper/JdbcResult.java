@@ -101,9 +101,9 @@ public class JdbcResult {
 
             if (clazz.isEnum()) {
                 if (value instanceof Number) {
-                    value = clazz.getEnumConstants()[((Number)value).intValue()];
+                    return clazz.getEnumConstants()[((Number)value).intValue()];
                 } else if (value instanceof String) {
-                    value = Enum.valueOf((Class)clazz, (String)value);
+                    return (T) Enum.valueOf((Class)clazz, (String)value);
                 }
             }
 
