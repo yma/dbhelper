@@ -154,10 +154,15 @@ public class JdbcResultTest extends TestingDatabase {
         }
     }
 
-    @Test(expected=ClassCastException.class)
+    @Test
     public void testPrimitivePrimitiveFactory_num_badType() {
-        Sql.Select query = Sql.select("*").from(Entry.class);
-        jdbc.execute(query, JdbcResult.primitiveFactory(float.class, "num")).first().getClass();
+        try {
+            Sql.Select query = Sql.select("*").from(Entry.class);
+            jdbc.execute(query, JdbcResult.primitiveFactory(float.class, "num")).first().getClass();
+            fail("ClassCastException expected");
+        } catch (ClassCastException e) {
+            assertEquals("java.lang.Double cannot be cast to java.lang.Float", e.getMessage());
+        }
     }
 
     @Test
@@ -236,10 +241,16 @@ public class JdbcResultTest extends TestingDatabase {
         assertEquals(0, linux.size());
     }
 
-    @Test(expected=JdbcStatementException.class)
+    @Test
     public void testClassFactorySelectAllTooManyColumns() {
-        Sql.Select query = Sql.select("*").from(TinyEntry.class);
-        jdbc.execute(query, JdbcResult.classFactory(TinyEntry.class));
+        try {
+            Sql.Select query = Sql.select("*").from(Entry.class);
+            jdbc.execute(query, JdbcResult.classFactory(TinyEntry.class));
+            fail("JdbcIteratorException expected");
+        } catch(JdbcIteratorException e) {
+            assertEquals(JdbcResultException.class, e.getCause().getClass());
+            assertEquals(NoSuchFieldException.class, e.getCause().getCause().getClass());
+        }
     }
 
     @Test

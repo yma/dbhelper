@@ -61,6 +61,8 @@
     <target name="test" depends="clean, compile-test, build">
         <junit failureProperty="test.failure">
             <classpath refid="classpath.test" />
+            <sysproperty key="test.dbhelper.jdbcDriver" value="${jdbcDriver}" />
+            <sysproperty key="test.dbhelper.jdbcURL" value="${jdbcURL}" />
             <batchtest>
                 <fileset dir="tmp/classes">
                     <include name="**/*Test.class" />
@@ -75,10 +77,23 @@
         <junit failureProperty="test.failure">
             <formatter type="plain" usefile="false" />
             <classpath refid="classpath.test" />
+            <sysproperty key="test.dbhelper.jdbcDriver" value="${jdbcDriver}" />
+            <sysproperty key="test.dbhelper.jdbcURL" value="${jdbcURL}" />
             <test name="${class}" />
         </junit>
         <antcall target="clean" />
         <fail message="test failed" if="test.failure" />
+    </target>
+
+    <target name="test-all">
+        <antcall target="test">
+          <param name="jdbcDriver" value="org.hsqldb.jdbcDriver"/>
+          <param name="jdbcURL" value="jdbc:hsqldb:mem:dbhelper"/>
+        </antcall>
+        <antcall target="test">
+          <param name="jdbcDriver" value="org.h2.Driver"/>
+          <param name="jdbcURL" value="jdbc:h2:mem:"/>
+        </antcall>
     </target>
 
 </project>

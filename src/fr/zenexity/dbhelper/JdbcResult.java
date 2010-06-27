@@ -135,8 +135,7 @@ public class JdbcResult {
                 ResultSetMetaData meta = result.getMetaData();
                 int count = meta.getColumnCount();
                 for (int i = 1; i <= count; i++) {
-                    String label = meta.getColumnLabel(i);
-                    if (meta.isCaseSensitive(i) ? label.equals(field) : label.equalsIgnoreCase(field)) {
+                    if (meta.getColumnLabel(i).equalsIgnoreCase(field)) {
                         columnIndex = i;
                         break;
                     }
@@ -161,25 +160,19 @@ public class JdbcResult {
         private final Class<T> objectClass;
         private final Set<String> fields;
         private List<ColumnInfo> columns;
-        private Map<String, String> labelsToFields;
 
         public ClassFactory(Class<T> objectClass, Collection<String> fields) {
             this.objectClass = objectClass;
             this.fields = fields == null ? null : new HashSet<String>(fields);
         }
 
-        public Map<String, String> labelsToFields() {
-            if (labelsToFields == null) {
-                labelsToFields = new HashMap<String, String>();
-                for (Field objectField : objectClass.getFields()) {
-                    String fieldName = objectField.getName();
-                    labelsToFields.put(fieldName.toLowerCase(), fieldName);
-                }
-            }
-            return labelsToFields;
-        }
-
         public void init(ResultSet result) throws SQLException, JdbcResultException {
+            Map<String, String> labelsToFields = new HashMap<String, String>();
+            for (Field objectField : objectClass.getFields()) {
+                String fieldName = objectField.getName();
+                labelsToFields.put(fieldName.toLowerCase(), fieldName);
+            }
+
             Map<String, Integer> fieldsIndexes = new HashMap<String, Integer>();
 
             ResultSetMetaData meta = result.getMetaData();
@@ -187,10 +180,8 @@ public class JdbcResult {
             for (int i = 1; i <= count; i++) {
                 String label = meta.getColumnLabel(i);
                 if (label.length() != 0) {
-                    if (!meta.isCaseSensitive(i)) {
-                        String name = labelsToFields().get(label.toLowerCase());
-                        if (name != null) label = name;
-                    }
+                    String name = labelsToFields.get(label.toLowerCase());
+                    if (name != null) label = name;
                     if (fields == null || fields.contains(label))
                         fieldsIndexes.put(label, i);
                 }
@@ -248,22 +239,16 @@ public class JdbcResult {
     }
 
     public static class MapFactory implements Factory<Map<String, Object>> {
-        private Map<String, String> columnInsensitiveFields;
         private List<ColumnInfo> columns;
 
         public void init(ResultSet result) throws SQLException, JdbcResultException {
-            columnInsensitiveFields = new HashMap<String, String>();
             columns = new ArrayList<ColumnInfo>();
 
             ResultSetMetaData meta = result.getMetaData();
             int count = meta.getColumnCount();
             for (int i = 1; i <= count; i++) {
                 String label = meta.getColumnLabel(i);
-                if (label.length() != 0) {
-                    if (!meta.isCaseSensitive(i))
-                        columnInsensitiveFields.put(label.toLowerCase(), label);
-                    columns.add(new ColumnInfo(i, label));
-                }
+                if (label.length() != 0) columns.add(new ColumnInfo(i, label.toLowerCase()));
             }
         }
 
@@ -284,17 +269,8 @@ public class JdbcResult {
 
         private class FieldHashMap extends HashMap<String, Object> {
             @Override
-            public Object put(String key, Object value) {
-                String insensitiveKey = columnInsensitiveFields.get(key.toLowerCase());
-                if (insensitiveKey != null) key = insensitiveKey;
-                return super.put(key, value);
-            }
-
-            @Override
             public Object get(Object key) {
-                String insensitiveKey = columnInsensitiveFields.get(key.toString().toLowerCase());
-                if (insensitiveKey != null) key = insensitiveKey;
-                return super.get(key);
+                return super.get(key.toString().toLowerCase());
             }
         }
 

@@ -19,13 +19,10 @@ public class TestingDatabase {
         public DistType typeOrdinal;
     }
 
-    public static Connection initdb_HSQLMEM() {
+    public static Connection getConnection(String driverClass, String connectionURL) {
         try {
-            Class.forName("org.hsqldb.jdbcDriver");
-            Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:dbhelper", "sa", "");
-            JdbcStatement.executeUpdate(connection, "DROP TABLE IF EXISTS Entry");
-            JdbcStatement.executeUpdate(connection, "CREATE TABLE Entry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT)");
-            return connection;
+            Class.forName(driverClass);
+            return DriverManager.getConnection(connectionURL);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -33,14 +30,22 @@ public class TestingDatabase {
 
     @Before
     public void loadData() {
-        jdbc = new Jdbc(initdb_HSQLMEM());
+        String jdbcDriver = System.getProperty("test.dbhelper.jdbcDriver");
+        String jdbcURL = System.getProperty("test.dbhelper.jdbcURL");
+        if (jdbcDriver == null || jdbcDriver.length() == 0 || jdbcDriver.charAt(0) == '$') jdbcDriver = "org.hsqldb.jdbcDriver";
+        if (jdbcURL == null || jdbcURL.length() == 0 || jdbcURL.charAt(0) == '$') jdbcURL = "jdbc:hsqldb:mem:dbhelper";
+        jdbc = new Jdbc(getConnection(jdbcDriver, jdbcURL));
+
+        JdbcStatement.executeUpdate(jdbc.connection, "DROP TABLE IF EXISTS Entry");
+        JdbcStatement.executeUpdate(jdbc.connection, "CREATE TABLE Entry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT)");
+
         JdbcStatement insertEntry = jdbc.newStatement("INSERT INTO Entry (distName, version, num, typeName, typeOrdinal) VALUES (?, ?, ?, ?, ?)");
         try {
-            insertEntry.executeUpdate("Debian", "5.0", 5, Entry.DistType.DEBIAN, Entry.DistType.DEBIAN.ordinal());
-            insertEntry.executeUpdate("Ubuntu", "9.10", 9.10, Entry.DistType.UBUNTU, Entry.DistType.UBUNTU.ordinal());
-            insertEntry.executeUpdate("Fedora", "12", 12, Entry.DistType.FEDORA, Entry.DistType.FEDORA.ordinal());
-            insertEntry.executeUpdate("Mandriva", "2010", 2010, Entry.DistType.MANDRIVA, Entry.DistType.MANDRIVA.ordinal());
-            insertEntry.executeUpdate("Slackware", "13.0", 13, Entry.DistType.SLACKWARE, Entry.DistType.SLACKWARE.ordinal());
+            insertEntry.executeUpdate("Debian", "5.0", 5, Entry.DistType.DEBIAN.name(), Entry.DistType.DEBIAN.ordinal());
+            insertEntry.executeUpdate("Ubuntu", "9.10", 9.10, Entry.DistType.UBUNTU.name(), Entry.DistType.UBUNTU.ordinal());
+            insertEntry.executeUpdate("Fedora", "12", 12, Entry.DistType.FEDORA.name(), Entry.DistType.FEDORA.ordinal());
+            insertEntry.executeUpdate("Mandriva", "2010", 2010, Entry.DistType.MANDRIVA.name(), Entry.DistType.MANDRIVA.ordinal());
+            insertEntry.executeUpdate("Slackware", "13.0", 13, Entry.DistType.SLACKWARE.name(), Entry.DistType.SLACKWARE.ordinal());
         } finally {
             insertEntry.close();
         }
