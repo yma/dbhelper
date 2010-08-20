@@ -1,5 +1,7 @@
 package fr.zenexity.dbhelper;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -30,6 +32,10 @@ public class SqlScript implements Iterable<Sql.FinalUpdateQuery> {
         SqlScript script = new SqlScript();
         for (String query : queries) script.add(query);
         return script;
+    }
+
+    public static SqlScript from(File scriptFile) throws IOException {
+        return from(new FileInputStream(scriptFile));
     }
 
     public static SqlScript from(InputStream scriptStream) throws IOException {
