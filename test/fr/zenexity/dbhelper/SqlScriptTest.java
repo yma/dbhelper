@@ -33,7 +33,7 @@ public class SqlScriptTest {
             commands.add(command);
             script += command+";\n";
         }
-        assertEquals(commands, SqlScript.loadScript(new ByteArrayInputStream(script.getBytes()), ";"));
+        assertEquals(commands, SqlScript.loadScript(new ByteArrayInputStream(script.getBytes())));
     }
 
     @Test
@@ -45,7 +45,15 @@ public class SqlScriptTest {
             commands.add(command);
             script += command+";\n";
         }
-        assertEquals(commands, SqlScript.loadScript(new ByteArrayInputStream(script.getBytes()), ";"));
+        assertEquals(commands, SqlScript.loadScript(new ByteArrayInputStream(script.getBytes())));
+    }
+
+    @Test
+    public void testLoadScriptEncoding() throws IOException {
+        String script = "Hélo";
+        assertEquals(Arrays.asList("Hélo"), SqlScript.loadScript(new ByteArrayInputStream(script.getBytes()), null));
+        assertEquals(Arrays.asList("Hélo"), SqlScript.loadScript(new ByteArrayInputStream(script.getBytes()), "UTF-8"));
+        assertEquals(Arrays.asList("H\303\251lo"), SqlScript.loadScript(new ByteArrayInputStream(script.getBytes()), "ISO-8859-1"));
     }
 
 }

@@ -4,11 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class SqlScript implements Iterable<Sql.FinalUpdateQuery> {
+
+    public static final String defaultDelimiter = ";";
 
     public static SqlScript from(Sql.UpdateQuery... queries) {
         SqlScript script = new SqlScript();
@@ -38,30 +42,46 @@ public class SqlScript implements Iterable<Sql.FinalUpdateQuery> {
         return from(new FileInputStream(scriptFile));
     }
 
+    public static SqlScript from(File scriptFile, String encoding) throws IOException {
+        return from(new FileInputStream(scriptFile), encoding);
+    }
+
     public static SqlScript from(InputStream scriptStream) throws IOException {
         return fromString(loadScript(scriptStream));
     }
 
-    public static SqlScript from(InputStream scriptStream, String delimiter) throws IOException {
-        return fromString(loadScript(scriptStream, delimiter));
+    public static SqlScript from(InputStream scriptStream, String encoding) throws IOException {
+        return fromString(loadScript(scriptStream, encoding));
+    }
+
+    public static SqlScript from(InputStream scriptStream, String encoding, String delimiter) throws IOException {
+        return fromString(loadScript(scriptStream, encoding, delimiter));
     }
 
     public static List<String> loadScript(InputStream scriptStream) throws IOException {
-        return loadScript(scriptStream, ";");
+        return loadScript(scriptStream, null, null);
     }
 
-    public static List<String> loadScript(InputStream scriptStream, String delimiter) throws IOException {
-        String script = "";
-        byte[] buffer = new byte[4096];
-        for (int n; (n = scriptStream.read(buffer)) != -1;) script += new String(buffer, 0, n);
-        return loadScript(script, delimiter);
+    public static List<String> loadScript(InputStream scriptStream, String encoding) throws IOException {
+        return loadScript(scriptStream, encoding, null);
+    }
+
+    public static List<String> loadScript(InputStream scriptStream, String encoding, String delimiter) throws IOException {
+        InputStreamReader scriptReader = encoding == null
+            ? new InputStreamReader(scriptStream)
+            : new InputStreamReader(scriptStream, encoding);
+        StringWriter script = new StringWriter();
+        char[] buffer = new char[4096];
+        for (int n; (n = scriptReader.read(buffer)) != -1;) script.write(buffer, 0, n);
+        return loadScript(script.toString(), delimiter);
     }
 
     public static List<String> loadScript(String script) {
-        return loadScript(script, ";");
+        return loadScript(script, null);
     }
 
     public static List<String> loadScript(String script, String delimiter) {
+        if (delimiter == null) delimiter = defaultDelimiter;
         List<String> commands = new ArrayList<String>();
         while (script.length() != 0) {
             final String command;
