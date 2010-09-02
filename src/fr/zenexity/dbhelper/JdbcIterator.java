@@ -17,6 +17,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     protected Statement statement;
     protected ResultSet result;
     protected T next;
+    protected boolean loadNext;
 
     /**
      * if statement is not null then it will be closed with the ResultSet
@@ -26,6 +27,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
         this.statement = statement;
         this.result = result;
         next = null;
+        loadNext = true;
 
         if (this.result != null) {
             try {
@@ -41,7 +43,6 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     public void close() throws JdbcIteratorException {
         try {
             if (result != null) {
-                next = null;
                 result.close();
                 result = null;
             }
@@ -59,9 +60,11 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     }
 
     protected void load() throws JdbcIteratorException {
-        if (next == null && result != null) try {
-            if (result.next()) next = factory.create(result);
-            else close();
+        if (loadNext && result != null) try {
+            if (result.next()) {
+                next = factory.create(result);
+                loadNext = false;
+            } else close();
         } catch (SQLException ex) {
             throw new JdbcIteratorException(ex);
         } catch (JdbcResultException ex) {
@@ -71,14 +74,13 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
     public boolean hasNext() throws JdbcIteratorException {
         load();
-        return next != null;
+        return result != null;
     }
 
     public T next() throws JdbcIteratorException {
         load();
-        T e = next;
-        next = null;
-        return e;
+        loadNext = true;
+        return next;
     }
 
     public void remove() {
@@ -129,7 +131,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
         @Override
         protected void load() throws JdbcIteratorException {
-            if (next == null) {
+            if (loadNext && result != null) {
                 if (size-- > 0) super.load();
                 else close();
             }

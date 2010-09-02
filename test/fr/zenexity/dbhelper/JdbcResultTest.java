@@ -123,6 +123,22 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
+    public void testPrimitiveFactory_withNull() {
+        assertEquals(1, jdbc.execute(Sql.insert(Entry.class).set("distName", null)));
+        assertEquals(1, jdbc.execute(Sql.insert(Entry.class).set("distName", null)));
+
+        Sql.Select query = Sql.select("*").from(Entry.class).orderBy("distName");
+        JdbcIterator<String> entry = jdbc.execute(query, 0, 3, JdbcResult.primitiveFactory(String.class, "distName"));
+        assertTrue(entry.hasNext());
+        assertEquals(null, entry.next());
+        assertTrue(entry.hasNext());
+        assertEquals(null, entry.next());
+        assertTrue(entry.hasNext());
+        assertEquals("Debian", entry.next());
+        assertFalse(entry.hasNext());
+    }
+
+    @Test
     public void testPrimitivePrimitiveFactory_num() {
         Set<Double> nums = new HashSet<Double>();
         nums.add(5.0);
