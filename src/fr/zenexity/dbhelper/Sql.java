@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -817,6 +818,38 @@ public abstract class Sql {
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object param) { return new FinalUpdateQuery(src, param); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object... params) { return new FinalUpdateQuery(src, params); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Iterable<?> params) { return new FinalUpdateQuery(src, params); }
+
+    public static String resolve(Query query) { return resolve(query.toString(), query.params().iterator()); }
+    public static String resolve(UpdateQuery query) { return resolve(query.toString(), query.params().iterator()); }
+    private static String resolve(String query, Iterator<Object> params) {
+        char quote = 0;
+        boolean backslash = false;
+        for (int ndx = 0; ndx < query.length(); ndx++) {
+            if (backslash) {
+                backslash = false;
+                continue;
+            }
+            char ch = query.charAt(ndx);
+            switch (ch) {
+            case '\\':
+                backslash = true;
+                break;
+            case '\'':
+            case '"':
+                quote = quote == 0 ? ch : quote == ch ? 0 : quote;
+                break;
+            case '?':
+                if (quote == 0) {
+                    String param = inlineParam(params.next());
+                    query = query.substring(0, ndx) + param + query.substring(ndx+1);
+                    ndx += param.length() - 1;
+                }
+                break;
+            }
+        }
+        if (params.hasNext()) throw new IllegalArgumentException("Too many parameters");
+        return query;
+    }
 
     public static String table(String name) {
         return name;

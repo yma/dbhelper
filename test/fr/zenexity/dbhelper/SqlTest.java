@@ -127,6 +127,20 @@ public class SqlTest {
     }
 
     @Test
+    public void resolve() {
+        assertEquals("x=1 AND y='?\"'2 AND z=\"\\\"?\"3",
+                Sql.resolve(new Sql.Select()
+                        .where("x=?", 1)
+                        .andWhere("y='?\"'?", 2)
+                        .andWhere("z=\"\\\"?\"?", 3)));
+        assertEquals("WHERE x=1 AND y='?\"'2 AND z=\"\\\"?\"3",
+                Sql.resolve(new Sql.Update()
+                        .where("x=?", 1)
+                        .andWhere("y='?\"'?", 2)
+                        .andWhere("z=\"\\\"?\"?", 3)));
+    }
+
+    @Test
     public void table() {
         assertEquals("table", Sql.table("table"));
         assertEquals("table", Sql.table("table", null));
