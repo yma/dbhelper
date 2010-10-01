@@ -3,7 +3,10 @@ package fr.zenexity.dbhelper;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -874,10 +877,9 @@ public abstract class Sql {
     }
 
     public static String inlineParam(Object param) {
-        if (param == null) return "NULL";
-
-        String str;
-        if (param instanceof String) str = quote(param.toString());
+        final String str;
+        if (param == null) str = "NULL";
+        else if (param instanceof String) str = quote(param.toString());
         else if (param instanceof Iterable<?>) {
             Concat list = new Concat("(", ", ", ")");
             for (Object p : (Iterable<?>)param) list.append(inlineParam(p));
@@ -889,6 +891,10 @@ public abstract class Sql {
             str = list.toString();
         } else if (param instanceof Enum<?>) {
             str = quote(param.toString());
+        } else if (param instanceof Date) {
+            str = inlineParam(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((Date)param));
+        } else if (param instanceof Calendar) {
+            str = inlineParam(((Calendar)param).getTime());
         } else str = param.toString();
         return str;
     }

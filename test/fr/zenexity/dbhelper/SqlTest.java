@@ -2,7 +2,11 @@ package fr.zenexity.dbhelper;
 
 import static org.junit.Assert.*;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+
 import org.junit.Test;
 
 /**
@@ -157,16 +161,36 @@ public class SqlTest {
     }
 
     @Test
-    public void inlineParam() {
+    public void inlineParamPrimitive() {
         assertEquals("NULL", Sql.inlineParam(null));
         assertEquals("123", Sql.inlineParam(123));
         assertEquals("'Hello World'", Sql.inlineParam("Hello World"));
+    }
+
+    @Test
+    public void inlineParamList() {
         assertEquals("(1, 2, 3)", Sql.inlineParam(new Integer[] {1, 2, 3}));
         assertEquals("('Hello', 'cool', 'World')", Sql.inlineParam(new String[] {"Hello", "cool", "World"}));
         assertEquals("(1)", Sql.inlineParam(new Integer[] {1}));
         assertEquals("", Sql.inlineParam(new Integer[] {}));
         assertEquals("(0, 1, 2)", Sql.inlineParam(Arrays.asList(0, 1, 2)));
         assertEquals("(1, 2, 3)", Sql.inlineParam(new int[] {1, 2, 3}));
+    }
+
+    @Test
+    public void inlineParamDate() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2010, 12-1, 31, 23, 59, 49);
+        Date date = calendar.getTime();
+        Timestamp timestamp = new Timestamp(date.getTime());
+        java.sql.Date sqlDate = new java.sql.Date(date.getTime());
+        assertEquals("'2010-12-31 23:59:49'", Sql.inlineParam(date));
+        assertEquals("'2010-12-31 23:59:49'", Sql.inlineParam(calendar));
+        assertEquals("'2010-12-31 23:59:49'", Sql.inlineParam(timestamp));
+        assertEquals("'2010-12-31 23:59:49'", Sql.inlineParam(sqlDate));
+
+        calendar.set(1, 0, 1, 0, 0, 0);
+        assertEquals("'0001-01-01 00:00:00'", Sql.inlineParam(calendar));
     }
 
 }
