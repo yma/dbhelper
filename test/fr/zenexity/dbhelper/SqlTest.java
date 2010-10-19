@@ -193,4 +193,14 @@ public class SqlTest {
         assertEquals("'0001-01-01 00:00:00'", Sql.inlineParam(calendar));
     }
 
+    @Test
+    public void inlineParamInlineableQuery() {
+        assertEquals("(SELECT a WHERE x=1)", Sql.inlineParam(Sql.select("a").where("x=?", 1)));
+        assertEquals("(x=1)", Sql.inlineParam(Sql.where("x=?", 1)));
+        assertEquals("(SELECT a WHERE (x=1) AND y in (SELECT b WHERE z=2))",
+                Sql.inlineParam(Sql.select("a").
+                        where(Sql.where("x=?", 1)).
+                        andWhere("y in ?", Sql.select("b").where("z=?", 2))));
+    }
+
 }

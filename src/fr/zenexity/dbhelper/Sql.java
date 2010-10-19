@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -141,7 +142,13 @@ public abstract class Sql {
         }
     }
 
-    public static class Where {
+    public interface InlineableQuery {
+        @Override String toString();
+        Iterable<Object> params();
+        List<Object> copyParams();
+    }
+
+    public static class Where implements InlineableQuery {
         private final ConcatWithParams query;
 
         public Where() {
@@ -153,14 +160,28 @@ public abstract class Sql {
             query = new ConcatWithParams(src.query);
         }
 
+        private void append(String sep, String expr, Object... params) {
+            query.separator(sep);
+            int index = 0;
+            for (Object param : params) {
+                if (param instanceof InlineableQuery) {
+                    expr = resolve(expr, Arrays.asList(param), index, index+1);
+                } else {
+                    index++;
+                    query.param(param);
+                }
+            }
+            query.append(expr);
+        }
+
         private void subWhere(String sep, Where where) {
             query.paramsList(where.query.params).separator(sep);
             if (!where.query.isEmpty()) query.append("(" + where.toString() + ")");
         }
 
-        public Where and(String expr, Object... params) { query.params(params).separator(" AND ").append(expr); return this; }
+        public Where and(String expr, Object... params) { append(" AND ", expr, params); return this; }
         public Where and(Where where) { subWhere(" AND ", where); return this; }
-        public Where or(String expr, Object... params) { query.params(params).separator(" OR ").append(expr); return this; }
+        public Where or(String expr, Object... params) { append(" OR ", expr, params); return this; }
         public Where or(Where where) { subWhere(" OR ", where); return this; }
 
         public static Where key(Object obj, String... keyFields) throws SqlException {
@@ -191,7 +212,7 @@ public abstract class Sql {
             return query.params;
         }
 
-        public List<Object> paramsList() {
+        public List<Object> copyParams() {
             return new ArrayList<Object>(query.params);
         }
 
@@ -200,10 +221,7 @@ public abstract class Sql {
         }
     }
 
-    public interface Query {
-        @Override String toString();
-        Iterable<Object> params();
-        List<Object> copyParams();
+    public interface Query extends InlineableQuery {
     }
 
     public interface UpdateQuery {
@@ -820,9 +838,12 @@ public abstract class Sql {
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object... params) { return new FinalUpdateQuery(src, params); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Iterable<?> params) { return new FinalUpdateQuery(src, params); }
 
-    public static String resolve(Query query) { return resolve(query.toString(), query.params().iterator()); }
-    public static String resolve(UpdateQuery query) { return resolve(query.toString(), query.params().iterator()); }
-    private static String resolve(String query, Iterator<Object> params) {
+    public static String resolve(InlineableQuery query) { return resolve(query.toString(), query.params()); }
+    public static String resolve(UpdateQuery query) { return resolve(query.toString(), query.params()); }
+    private static String resolve(String query, Iterable<Object> params) { return resolve(query, params, 0, -1); }
+    private static String resolve(String query, Iterable<Object> params, int start, int end) {
+        Iterator<Object> paramsIt = params.iterator();
+        int index = 0;
         char quote = 0;
         boolean backslash = false;
         for (int ndx = 0; ndx < query.length(); ndx++) {
@@ -841,14 +862,17 @@ public abstract class Sql {
                 break;
             case '?':
                 if (quote == 0) {
-                    String param = inlineParam(params.next());
-                    query = query.substring(0, ndx) + param + query.substring(ndx+1);
-                    ndx += param.length() - 1;
+                    if (index >= start && (end == -1 || index < end)) {
+                        String param = inlineParam(paramsIt.next());
+                        query = query.substring(0, ndx) + param + query.substring(ndx+1);
+                        ndx += param.length() - 1;
+                    }
+                    index++;
                 }
                 break;
             }
         }
-        if (params.hasNext()) throw new IllegalArgumentException("Too many parameters");
+        if (paramsIt.hasNext()) throw new IllegalArgumentException("Too many parameters");
         return query;
     }
 
@@ -893,6 +917,8 @@ public abstract class Sql {
             str = inlineParam(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((Date)param));
         } else if (param instanceof Calendar) {
             str = inlineParam(((Calendar)param).getTime());
+        } else if (param instanceof InlineableQuery) {
+            str = "(" + Sql.resolve((InlineableQuery)param) + ")";
         } else str = param.toString();
         return str;
     }

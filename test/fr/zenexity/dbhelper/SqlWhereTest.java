@@ -3,6 +3,7 @@ package fr.zenexity.dbhelper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -71,6 +72,56 @@ public class SqlWhereTest {
         assertWhere(x, "");
         assertWhere(new Sql.Where().and(x), "");
         assertWhere(new Sql.Where().and(x).and(x), "");
+    }
+
+    @Test
+    public void testWithSelectInParams() {
+        try {
+            Sql.where("x", Sql.select("a"));
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Too many parameters", e.getMessage());
+        }
+        assertWhere(Sql.where("x in ?", Sql.select("a")), "x in (SELECT a)");
+        try {
+            Sql.where("x in ?", Sql.select("a=?"));
+            fail("NoSuchElementException expected");
+        } catch (NoSuchElementException e) {
+            assertEquals(null, e.getMessage());
+        }
+        try {
+            Sql.where("x in ?", Sql.select("a").where("y", 1));
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Too many parameters", e.getMessage());
+        }
+        assertWhere(Sql.where("x in ?", Sql.select("a").where("y=?", 1)), "x in (SELECT a WHERE y=1)");
+        assertWhere(Sql.where("i=? and x in ? and z=?", 1, Sql.select("a").where("y=?", 2), 3), "i=? and x in (SELECT a WHERE y=2) and z=?", 1, 3);
+    }
+
+    @Test
+    public void testWithWhereInParams() {
+        try {
+            Sql.where("x", Sql.where("y"));
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Too many parameters", e.getMessage());
+        }
+        assertWhere(Sql.where("x in ?", Sql.where("y")), "x in (y)");
+        try {
+            Sql.where("x in ?", Sql.where("y=?"));
+            fail("NoSuchElementException expected");
+        } catch (NoSuchElementException e) {
+            assertEquals(null, e.getMessage());
+        }
+        try {
+            Sql.where("x in ?", Sql.where("y", 1));
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Too many parameters", e.getMessage());
+        }
+        assertWhere(Sql.where("x in ?", Sql.where("y=?", 1)), "x in (y=1)");
+        assertWhere(Sql.where("i=? and x in ? and z=?", 1, Sql.where("y=?", 2), 3), "i=? and x in (y=2) and z=?", 1, 3);
     }
 
     @Test
