@@ -803,6 +803,7 @@ public abstract class Sql {
 
     public static Where where() { return new Where(); }
     public static Where where(String expr, Object... params) { return new Where().and(expr, params); }
+    public static Where where(Where where) { return new Where().and(where); }
 
     public static Select clone(Select src) { return new Select(src); }
     public static Union  clone(Union  src) { return new Union (src); }

@@ -29,6 +29,13 @@ public class SqlWhereTest {
     }
 
     @Test
+    public void testHelpers() {
+        assertWhere(Sql.where(), "");
+        assertWhere(Sql.where("x"), "(x)");
+        assertWhere(Sql.where(Sql.where("x")), "((x))");
+    }
+
+    @Test
     public void testAnd() {
         assertWhere(new Sql.Where().and("x"), "(x)");
         assertWhere(new Sql.Where().and("x", 1), "(x)", 1);
