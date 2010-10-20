@@ -157,6 +157,13 @@ public class SqlSelectTest {
     }
 
     @Test
+    public void subWhere() {
+        SqlTest.assertQuery(Sql.select().where(Sql.where("x", 1, 2, 3)), "(x)", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().orWhere(Sql.where("x", 1, 2, 3)), "(x)", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().andWhere(Sql.where("x", 1, 2, 3)), "(x)", 1, 2, 3);
+    }
+
+    @Test
     public void groupBy() {
         assertEquals("GROUP BY x", Sql.select().groupBy("x").toString());
         assertEquals("GROUP BY x, y", Sql.select().groupBy("x").groupBy("y").toString());
@@ -169,7 +176,7 @@ public class SqlSelectTest {
         assertEquals("HAVING x", Sql.select().having("x").toString());
         assertEquals("HAVING x, y", Sql.select().having("x").having("y").toString());
         SqlTest.assertQuery(Sql.select().having("x", 1, 2, 3), "HAVING x", 1, 2, 3);
-        SqlTest.assertQuery(Sql.select().having(Sql.where("x", 1, 2, 3)), "HAVING (x)", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().having(Sql.where("x", 1, 2, 3)), "HAVING x", 1, 2, 3);
     }
 
     @Test

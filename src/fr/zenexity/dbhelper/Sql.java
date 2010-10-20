@@ -106,10 +106,6 @@ public abstract class Sql {
             if (prefix == null || suffix == null) throw new NullPointerException();
             return prefix + value + suffix;
         }
-
-        public String value() {
-            return value;
-        }
     }
 
     public static class ConcatWithParams extends Concat {
@@ -149,7 +145,7 @@ public abstract class Sql {
         private final ConcatWithParams query;
 
         public Where() {
-            query = new ConcatWithParams("(", null, ")");
+            query = new ConcatWithParams("", null);
             query.defaultValue(null);
         }
 
@@ -157,10 +153,15 @@ public abstract class Sql {
             query = new ConcatWithParams(src.query);
         }
 
+        private void subWhere(String sep, Where where) {
+            query.paramsList(where.query.params).separator(sep);
+            if (!where.query.isEmpty()) query.append("(" + where.toString() + ")");
+        }
+
         public Where and(String expr, Object... params) { query.params(params).separator(" AND ").append(expr); return this; }
-        public Where and(Where where) { query.paramsList(where.query.params).separator(" AND ").append(where.toString()); return this; }
+        public Where and(Where where) { subWhere(" AND ", where); return this; }
         public Where or(String expr, Object... params) { query.params(params).separator(" OR ").append(expr); return this; }
-        public Where or(Where where) { query.paramsList(where.query.params).separator(" OR ").append(where.toString()); return this; }
+        public Where or(Where where) { subWhere(" OR ", where); return this; }
 
         public static Where key(Object obj, String... keyFields) throws SqlException {
             Where keyWhere = new Where();
@@ -184,10 +185,6 @@ public abstract class Sql {
         @Override
         public String toString() {
             return query.toString();
-        }
-
-        public String value() {
-            return query.value();
         }
 
         public Iterable<Object> params() {
@@ -356,11 +353,11 @@ public abstract class Sql {
         public Select from(Select subquery, String name) { from.paramsList(subquery.params()).append("(" + subquery + ") AS " + name); return this; }
 
         public Select join(String expr, Object... params) { join.params(params).localPrefix("JOIN ").separator(" JOIN ").append(expr); return this; }
-        public Select join(String table, Where on) { return join(table +" ON "+ on.value(), on.paramsArray()); }
+        public Select join(String table, Where on) { return join(table +" ON "+ on.toString(), on.paramsArray()); }
         public Select innerJoin(String expr, Object... params) { join.params(params).localPrefix("INNER JOIN ").separator(" INNER JOIN ").append(expr); return this; }
-        public Select innerJoin(String table, Where on) { return innerJoin(table +" ON "+ on.value(), on.paramsArray()); }
+        public Select innerJoin(String table, Where on) { return innerJoin(table +" ON "+ on.toString(), on.paramsArray()); }
         public Select leftJoin(String expr, Object... params) { join.params(params).localPrefix("LEFT JOIN ").separator(" LEFT JOIN ").append(expr); return this; }
-        public Select leftJoin(String table, Where on) { return leftJoin(table +" ON "+ on.value(), on.paramsArray()); }
+        public Select leftJoin(String table, Where on) { return leftJoin(table +" ON "+ on.toString(), on.paramsArray()); }
 
         public Select where(String expr, Object... params) { return andWhere(expr, params); }
         public Select where(Where expr) { return andWhere(expr); }
