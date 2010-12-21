@@ -33,6 +33,11 @@
                 <include name="**/*.properties" />
                 <include name="**/*.xml" />
             </fileset>
+            <fileset dir="">
+                <include name="LICENSE" />
+                <include name="COPYING" />
+                <include name="COPYING.LESSER" />
+            </fileset>
         </copy>
     </target>
 
