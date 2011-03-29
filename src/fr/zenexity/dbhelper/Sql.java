@@ -895,7 +895,15 @@ public abstract class Sql {
     }
 
     public static String quote(String str) {
-        return "'" + str.replace("'","\\'") + "'";
+        return "'" + str.replace("\\", "\\\\").replace("'","\\'") + "'";
+    }
+
+    public static String likeEscape(String str) {
+        return str.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    public static String inline(Object param) {
+        return inlineParam(param);
     }
 
     public static String inlineParam(Object param) {

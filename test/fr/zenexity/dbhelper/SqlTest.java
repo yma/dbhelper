@@ -158,6 +158,19 @@ public class SqlTest {
     public void quote() {
         assertEquals("'Hello World'", Sql.quote("Hello World"));
         assertEquals("'Hello \\'World\\''", Sql.quote("Hello 'World'"));
+        assertEquals("'Hello\\\\World'", Sql.quote("Hello\\World"));
+        assertEquals("'Hello\\\\\\'World\\''", Sql.quote("Hello\\'World'"));
+    }
+
+    @Test
+    public void likeEscape() {
+        assertEquals("Hello World", Sql.likeEscape("Hello World"));
+        assertEquals("\\%Hello\\_\\\\\\%World\\_", Sql.likeEscape("%Hello_\\%World_"));
+    }
+
+    @Test
+    public void inline() {
+        assertEquals("'Hello World'", Sql.inline("Hello World"));
     }
 
     @Test
