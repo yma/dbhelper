@@ -22,12 +22,12 @@
     </target>
 
     <target name="jar" depends="build">
-	<delete file="dbhelper.jar" />
+        <delete file="dbhelper.jar" />
         <jar destfile="dbhelper.jar" basedir="tmp/classes" />
         <antcall target="clean-build" />
     </target>
 
-    <target name="build" depends="compile, includes-sources">
+    <target name="build" depends="version, compile, includes-sources">
         <copy todir="tmp/classes">
             <fileset dir="src">
                 <include name="**/*.properties" />
@@ -39,6 +39,18 @@
                 <include name="COPYING.LESSER" />
             </fileset>
         </copy>
+        <echo message="${version}" file="tmp/classes/version" />
+    </target>
+
+    <target name="version" unless="version">
+        <exec executable="git" outputproperty="gitversion" errorproperty="giterror" failonerror="false" failifexecutionfails="false">
+            <arg value="describe" />
+            <arg value="--always" />
+        </exec>
+        <condition property="version" value="${gitversion}" else="localbuild">
+            <equals arg1="" arg2="${giterror}" trim="true" />
+        </condition>
+        <echo message="Version ${version}"></echo>
     </target>
 
     <target name="compile">
