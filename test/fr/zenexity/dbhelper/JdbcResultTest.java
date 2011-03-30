@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -416,6 +417,243 @@ public class JdbcResultTest extends TestingDatabase {
         }
 
         assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testListFactory() {
+        Map<String, String> linux = new HashMap<String, String>();
+        linux.put("Debian", "5.0");
+        linux.put("Ubuntu", "9.10");
+        linux.put("Fedora", "12");
+        linux.put("Mandriva", "2010");
+        linux.put("Slackware", "13.0");
+
+        Sql.Select query = Sql.select("distName", "version").from(Entry.class);
+
+        for (List<Object> entry : jdbc.execute(query, JdbcResult.listFactory())) {
+            assertEquals(String.class, entry.get(0).getClass());
+            assertEquals(String.class, entry.get(1).getClass());
+            assertEquals(linux.get(entry.get(0)), entry.get(1));
+            linux.remove(entry.get(0));
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testListFactoryWithFields() {
+        Map<String, String> linux = new HashMap<String, String>();
+        linux.put("Debian", "5.0");
+        linux.put("Ubuntu", "9.10");
+        linux.put("Fedora", "12");
+        linux.put("Mandriva", "2010");
+        linux.put("Slackware", "13.0");
+
+        Sql.Select query = Sql.select("num", "version", "typeOrdinal", "distName").from(Entry.class);
+
+        for (List<Object> entry : jdbc.execute(query, JdbcResult.listFactory("Version", "distname"))) {
+            assertEquals(linux.get(entry.get(1)), entry.get(0));
+        }
+
+        for (List<Object> entry : jdbc.execute(query, JdbcResult.listFactory("distname", "Version"))) {
+            assertEquals(String.class, entry.get(0).getClass());
+            assertEquals(String.class, entry.get(1).getClass());
+            assertEquals(linux.get(entry.get(0)), entry.get(1));
+            linux.remove(entry.get(0));
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testListFactoryAssertType() {
+        Sql.Select query = Sql.select("num", "version", "typeOrdinal", "distName").from(Entry.class);
+        for (List<Object> entry : jdbc.execute(query, JdbcResult.listFactory())) {
+            assertEquals(Double.class, entry.get(0).getClass());
+            assertEquals(String.class, entry.get(1).getClass());
+            assertEquals(Integer.class, entry.get(2).getClass());
+            assertEquals(String.class, entry.get(3).getClass());
+        }
+    }
+
+    @Test
+    public void testListFactoryTypeCheck() {
+        Map<String, Double> linux = new HashMap<String, Double>();
+        linux.put("Debian", 5.0);
+        linux.put("Ubuntu", 9.10);
+        linux.put("Fedora", 12.0);
+        linux.put("Mandriva", 2010.0);
+        linux.put("Slackware", 13.0);
+
+        Sql.Select query = Sql.select("distName", "num").from(Entry.class);
+
+        for (List<Object> entry : jdbc.execute(query, JdbcResult.listFactory())) {
+            assertEquals(String.class, entry.get(0).getClass());
+            assertEquals(Double.class, entry.get(1).getClass());
+            assertEquals(linux.get(entry.get(0)), entry.get(1));
+            linux.remove(entry.get(0));
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testTypedListFactory() {
+        Map<String, String> linux = new HashMap<String, String>();
+        linux.put("Debian", "5.0");
+        linux.put("Ubuntu", "9.10");
+        linux.put("Fedora", "12");
+        linux.put("Mandriva", "2010");
+        linux.put("Slackware", "13.0");
+
+        Sql.Select query = Sql.select("distName", "version").from(Entry.class);
+
+        for (List<String> entry : jdbc.execute(query, JdbcResult.listFactory(String.class))) {
+            assertEquals(String.class, entry.get(0).getClass());
+            assertEquals(String.class, entry.get(1).getClass());
+            assertEquals(linux.get(entry.get(0)), entry.get(1));
+            linux.remove(entry.get(0));
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testTypedListFactoryBadCast() {
+        try {
+            Sql.Select query = Sql.select("distName", "num").from(Entry.class);
+            jdbc.execute(query, JdbcResult.listFactory(String.class)).first();
+            fail("JdbcIteratorException expected");
+        } catch (JdbcIteratorException e) {
+            assertEquals(JdbcResultException.class, e.getCause().getClass());
+            assertEquals("List[1]: 5.0 (java.lang.Double) to java.lang.String", e.getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+        }
+    }
+
+    @Test
+    public void testArrayFactory() {
+        Map<String, String> linux = new HashMap<String, String>();
+        linux.put("Debian", "5.0");
+        linux.put("Ubuntu", "9.10");
+        linux.put("Fedora", "12");
+        linux.put("Mandriva", "2010");
+        linux.put("Slackware", "13.0");
+
+        Sql.Select query = Sql.select("distName", "version").from(Entry.class);
+
+        for (Object[] entry : jdbc.execute(query, JdbcResult.arrayFactory())) {
+            assertEquals(String.class, entry[0].getClass());
+            assertEquals(String.class, entry[1].getClass());
+            assertEquals(linux.get(entry[0]), entry[1]);
+            linux.remove(entry[0]);
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testArrayFactoryWithFields() {
+        Map<String, String> linux = new HashMap<String, String>();
+        linux.put("Debian", "5.0");
+        linux.put("Ubuntu", "9.10");
+        linux.put("Fedora", "12");
+        linux.put("Mandriva", "2010");
+        linux.put("Slackware", "13.0");
+
+        Sql.Select query = Sql.select("num", "version", "typeOrdinal", "distName").from(Entry.class);
+
+        for (Object[] entry : jdbc.execute(query, JdbcResult.arrayFactory("Version", "distname"))) {
+            assertEquals(linux.get(entry[1]), entry[0]);
+        }
+
+        for (Object[] entry : jdbc.execute(query, JdbcResult.arrayFactory("distname", "Version"))) {
+            assertEquals(String.class, entry[0].getClass());
+            assertEquals(String.class, entry[1].getClass());
+            assertEquals(linux.get(entry[0]), entry[1]);
+            linux.remove(entry[0]);
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testArrayFactoryAssertType() {
+        Sql.Select query = Sql.select("num", "version", "typeOrdinal", "distName").from(Entry.class);
+        for (Object[] entry : jdbc.execute(query, JdbcResult.arrayFactory())) {
+            assertEquals(Double.class, entry[0].getClass());
+            assertEquals(String.class, entry[1].getClass());
+            assertEquals(Integer.class, entry[2].getClass());
+            assertEquals(String.class, entry[3].getClass());
+        }
+    }
+
+    @Test
+    public void testArrayFactoryTypeCheck() {
+        Map<String, Double> linux = new HashMap<String, Double>();
+        linux.put("Debian", 5.0);
+        linux.put("Ubuntu", 9.10);
+        linux.put("Fedora", 12.0);
+        linux.put("Mandriva", 2010.0);
+        linux.put("Slackware", 13.0);
+
+        Sql.Select query = Sql.select("distName", "num").from(Entry.class);
+
+        for (Object[] entry : jdbc.execute(query, JdbcResult.arrayFactory())) {
+            assertEquals(String.class, entry[0].getClass());
+            assertEquals(Double.class, entry[1].getClass());
+            assertEquals(linux.get(entry[0]), entry[1]);
+            linux.remove(entry[0]);
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testTypedArrayFactory() {
+        Map<String, String> linux = new HashMap<String, String>();
+        linux.put("Debian", "5.0");
+        linux.put("Ubuntu", "9.10");
+        linux.put("Fedora", "12");
+        linux.put("Mandriva", "2010");
+        linux.put("Slackware", "13.0");
+
+        Sql.Select query = Sql.select("distName", "version").from(Entry.class);
+
+        for (String[] entry : jdbc.execute(query, JdbcResult.arrayFactory(String.class))) {
+            assertEquals(String.class, entry[0].getClass());
+            assertEquals(String.class, entry[1].getClass());
+            assertEquals(linux.get(entry[0]), entry[1]);
+            linux.remove(entry[0]);
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
+    public void testTypedArrayFactoryBadCast() {
+        try {
+            Sql.Select query = Sql.select("distName", "num").from(Entry.class);
+            jdbc.execute(query, JdbcResult.arrayFactory(String.class)).first();
+            fail("JdbcIteratorException expected");
+        } catch (JdbcIteratorException e) {
+            assertEquals(JdbcResultException.class, e.getCause().getClass());
+            assertEquals("Array[1]: 5.0 (java.lang.Double) to java.lang.String", e.getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+        }
+    }
+
+    @Test
+    public void testCollectionFactoryWithUnknownField() {
+        Sql.Select query = Sql.select("num", "version", "typeOrdinal", "distName").from(Entry.class);
+        try{
+            jdbc.execute(query, JdbcResult.arrayFactory("distname", "Varsion", "yop"));
+            fail("JdbcIteratorException expected");
+        } catch (JdbcIteratorException e) {
+            assertEquals(JdbcResultException.class, e.getCause().getClass());
+            assertEquals(NoSuchFieldException.class, e.getCause().getCause().getClass());
+            assertEquals("varsion", e.getCause().getCause().getMessage());
+        }
     }
 
     public static class EntryWithTransient {

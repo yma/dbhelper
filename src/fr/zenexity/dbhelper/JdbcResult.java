@@ -1,5 +1,6 @@
 package fr.zenexity.dbhelper;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
@@ -81,6 +82,56 @@ public class JdbcResult {
 
     public static MapFactory mapFactory() {
         return new MapFactory();
+    }
+
+
+    public static ListFactory<Object> listFactory() {
+        return new ListFactory<Object>(Object.class, null);
+    }
+
+    public static ListFactory<Object> listFactory(String... fields) {
+        return new ListFactory<Object>(Object.class, Arrays.asList(fields));
+    }
+
+    public static ListFactory<Object> listFactory(List<String> fields) {
+        return new ListFactory<Object>(Object.class, fields);
+    }
+
+    public static <T> ListFactory<T> ListFactory(Class<T> objectClass) {
+        return new ListFactory<T>(objectClass, null);
+    }
+
+    public static <T> ListFactory<T> listFactory(Class<T> objectClass, String... fields) {
+        return new ListFactory<T>(objectClass, Arrays.asList(fields));
+    }
+
+    public static <T> ListFactory<T> listFactory(Class<T> objectClass, List<String> fields) {
+        return new ListFactory<T>(objectClass, fields);
+    }
+
+
+    public static ArrayFactory<Object> arrayFactory() {
+        return new ArrayFactory<Object>(Object.class, null);
+    }
+
+    public static ArrayFactory<Object> arrayFactory(String... fields) {
+        return new ArrayFactory<Object>(Object.class, Arrays.asList(fields));
+    }
+
+    public static ArrayFactory<Object> arrayFactory(List<String> fields) {
+        return new ArrayFactory<Object>(Object.class, fields);
+    }
+
+    public static <T> ArrayFactory<T> arrayFactory(Class<T> objectClass) {
+        return new ArrayFactory<T>(objectClass, null);
+    }
+
+    public static <T> ArrayFactory<T> arrayFactory(Class<T> objectClass, String... fields) {
+        return new ArrayFactory<T>(objectClass, Arrays.asList(fields));
+    }
+
+    public static <T> ArrayFactory<T> arrayFactory(Class<T> objectClass, List<String> fields) {
+        return new ArrayFactory<T>(objectClass, fields);
     }
 
 
@@ -282,6 +333,112 @@ public class JdbcResult {
                 this.index = index;
                 this.name = name;
             }
+        }
+    }
+
+    public static abstract class CollectionFactory<T> implements Factory<T> {
+        private final List<String> fields;
+        private final Set<String> fieldSet;
+        protected List<Integer> columns;
+
+        public CollectionFactory(Collection<String> fields) {
+            if (fields == null || fields.isEmpty()) {
+                this.fields = null;
+                this.fieldSet = null;
+            } else {
+                this.fields = new ArrayList<String>(fields.size());
+                for (String field : fields) this.fields.add(field.toLowerCase());
+                fieldSet = new HashSet<String>(this.fields);
+            }
+        }
+
+        public void init(ResultSet result) throws SQLException, JdbcResultException {
+            ResultSetMetaData meta = result.getMetaData();
+            int count = meta.getColumnCount();
+
+            if (fields == null) {
+                columns = new ArrayList<Integer>(count);
+                for (int i = 1; i <= count; i++) columns.add(i);
+            } else {
+                Map<String, Integer> fieldsIndexes = new HashMap<String, Integer>();
+                for (int i = 1; i <= count; i++) {
+                    String label = meta.getColumnLabel(i);
+                    if (label.length() != 0) {
+                        label = label.toLowerCase();
+                        if (fieldSet.contains(label)) fieldsIndexes.put(label, i);
+                    }
+                }
+                columns = new ArrayList<Integer>(fields.size());
+                for (String field : fields) {
+                    Integer index = fieldsIndexes.get(field);
+                    if (index == null) {
+                        throw new JdbcResultException(new NoSuchFieldException(field));
+                    }
+                    columns.add(index);
+                }
+            }
+        }
+
+        public abstract T create(ResultSet result) throws SQLException, JdbcResultException;
+    }
+
+    public static class ListFactory<T> extends CollectionFactory<List<T>> {
+        private final Class<T> objectClass;
+
+        public ListFactory(Class<T> objectClass, Collection<String> fields) {
+            super(fields);
+            this.objectClass = objectClass;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public List<T> create(ResultSet result) throws SQLException, JdbcResultException {
+            List<T> list = new ArrayList(columns.size());
+            int i = 0;
+            try {
+                for (Integer column : columns) {
+                    Object value = result.getObject(column);
+                    list.add(castValue(objectClass, value));
+                    i++;
+                }
+            } catch (SQLException e) {
+                throw e;
+            } catch (JdbcResultException e) {
+                throw new JdbcResultException("List["+i+"]: "+e.getMessage(), e.getCause());
+            } catch (Exception e) {
+                throw new JdbcResultException(e);
+            }
+            return list;
+        }
+    }
+
+    public static class ArrayFactory<T> extends CollectionFactory<T[]> {
+        private final Class<T> objectClass;
+
+        public ArrayFactory(Class<T> objectClass, Collection<String> fields) {
+            super(fields);
+            this.objectClass = objectClass;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public T[] create(ResultSet result) throws SQLException, JdbcResultException {
+            T[] array = (T[]) Array.newInstance(objectClass, columns.size());
+            int i = 0;
+            try {
+                for (Integer column : columns) {
+                    Object value = result.getObject(column);
+                    array[i] = castValue(objectClass, value);
+                    i++;
+                }
+            } catch (SQLException e) {
+                throw e;
+            } catch (JdbcResultException e) {
+                throw new JdbcResultException("Array["+i+"]: "+e.getMessage(), e.getCause());
+            } catch (Exception e) {
+                throw new JdbcResultException(e);
+            }
+            return array;
         }
     }
 
