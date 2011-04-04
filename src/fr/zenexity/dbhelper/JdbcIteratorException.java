@@ -6,4 +6,8 @@ public class JdbcIteratorException extends JdbcException {
         super(cause);
     }
 
+    public JdbcIteratorException(String message) {
+        super(message);
+    }
+
 }

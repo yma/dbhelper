@@ -6,4 +6,8 @@ public class JdbcException extends RuntimeException {
         super(cause);
     }
 
+    public JdbcException(String message) {
+        super(message);
+    }
+
 }
