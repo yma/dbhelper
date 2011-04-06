@@ -38,7 +38,7 @@ public class SqlFinalQueryTest {
 
     @Test
     public void testWithList() {
-        assertQuery(new Sql.FinalQuery(Sql.select("x").where("y", 1), Arrays.asList()), "SELECT x WHERE y", 1);
+        assertQuery(new Sql.FinalQuery(Sql.select("x").where("y", 1), Arrays.<Integer>asList()), "SELECT x WHERE y", 1);
         assertQuery(new Sql.FinalQuery(Sql.select("x").where("y", 1), Arrays.asList(2)), "SELECT x WHERE y", 1, 2);
         assertQuery(new Sql.FinalQuery(Sql.select("x").where("y", 1), Arrays.asList(2, 3)), "SELECT x WHERE y", 1, 2, 3);
     }

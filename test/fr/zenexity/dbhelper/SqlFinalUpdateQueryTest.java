@@ -38,7 +38,7 @@ public class SqlFinalUpdateQueryTest {
 
     @Test
     public void testWithList() {
-        assertQuery(new Sql.FinalUpdateQuery(Sql.insert("x").set("y", 1), Arrays.asList()), "INSERT INTO x (y) VALUES (?)", 1);
+        assertQuery(new Sql.FinalUpdateQuery(Sql.insert("x").set("y", 1), Arrays.<Integer>asList()), "INSERT INTO x (y) VALUES (?)", 1);
         assertQuery(new Sql.FinalUpdateQuery(Sql.insert("x").set("y", 1), Arrays.asList(2)), "INSERT INTO x (y) VALUES (?)", 1, 2);
         assertQuery(new Sql.FinalUpdateQuery(Sql.insert("x").set("y", 1), Arrays.asList(2, 3)), "INSERT INTO x (y) VALUES (?)", 1, 2, 3);
     }

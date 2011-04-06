@@ -13,9 +13,9 @@ public class SqlScriptTest {
 
     @Test
     public void testLoadScript() {
-        assertEquals(Arrays.asList(), SqlScript.loadScript("", ";"));
-        assertEquals(Arrays.asList(), SqlScript.loadScript("   ", ";"));
-        assertEquals(Arrays.asList(), SqlScript.loadScript(";", ";"));
+        assertEquals(Arrays.<String>asList(), SqlScript.loadScript("", ";"));
+        assertEquals(Arrays.<String>asList(), SqlScript.loadScript("   ", ";"));
+        assertEquals(Arrays.<String>asList(), SqlScript.loadScript(";", ";"));
         assertEquals(Arrays.asList("Hello"), SqlScript.loadScript("Hello", ";"));
         assertEquals(Arrays.asList("Hello"), SqlScript.loadScript("   Hello   ", ";"));
         assertEquals(Arrays.asList("Hello"), SqlScript.loadScript("Hello;", ";"));
