@@ -322,7 +322,7 @@ public abstract class Sql {
         private final ConcatWithParams join;
         public final Where where;
         private final Concat groupBy;
-        private final ConcatWithParams having;
+        public final Where having;
         private final Concat orderBy;
         private final Concat offset;
         private final Concat limit;
@@ -338,8 +338,8 @@ public abstract class Sql {
             where.query.prefix("WHERE ").suffix("");
             groupBy = new Concat("GROUP BY ", ", ");
             groupBy.defaultValue(null);
-            having = new ConcatWithParams("HAVING ", ", ");
-            having.defaultValue(null);
+            having = new Where();
+            having.query.prefix("HAVING ").suffix("");
             orderBy = new Concat("ORDER BY ", ", ");
             orderBy.defaultValue(null);
             offset = new Concat("OFFSET ", null);
@@ -352,7 +352,7 @@ public abstract class Sql {
             join = new ConcatWithParams(src.join);
             where = new Where(src.where);
             groupBy = new Concat(src.groupBy);
-            having = new ConcatWithParams(src.having);
+            having = new Where(src.having);
             orderBy = new Concat(src.orderBy);
             offset = new Concat(src.offset);
             limit = new Concat(src.limit);
@@ -387,8 +387,12 @@ public abstract class Sql {
         public Select groupBy(Object column) { groupBy.append(column); return this; }
         public Select groupBy(Object... columns) { groupBy.add(columns); return this; }
 
-        public Select having(String expr, Object... params) { having.params(params).append(expr); return this; }
-        public Select having(Where expr) { having.paramsList(expr.params()).append(expr.toString()); return this; }
+        public Select having(String expr, Object... params) { return andHaving(expr, params); }
+        public Select having(Where expr) { return andHaving(expr); }
+        public Select andHaving(String expr, Object... params) { having.and(expr, params); return this; }
+        public Select andHaving(Where expr) { having.and(expr); return this; }
+        public Select orHaving(String expr, Object... params) { having.or(expr, params); return this; }
+        public Select orHaving(Where expr) { having.or(expr); return this; }
 
         public Select orderBy(Object column) { orderBy.append(column); return this; }
         public Select orderBy(Object... columns) { orderBy.add(columns); return this; }
@@ -417,11 +421,15 @@ public abstract class Sql {
         }
 
         public List<Object> copyParams() {
-            List<Object> list = new ArrayList<Object>();
+            List<Object> list = new ArrayList<Object>(
+                    from.params.size() +
+                    join.params.size() +
+                    where.query.params.size() +
+                    having.query.params.size());
             list.addAll(from.params);
             list.addAll(join.params);
-            for (Object whereParam : where.params()) list.add(whereParam);
-            list.addAll(having.params);
+            list.addAll(where.query.params);
+            list.addAll(having.query.params);
             return list;
         }
     }
@@ -711,9 +719,11 @@ public abstract class Sql {
         }
 
         public List<Object> copyParams() {
-            List<Object> list = new ArrayList<Object>();
+            List<Object> list = new ArrayList<Object>(
+                    set.params.size() +
+                    where.query.params.size());
             list.addAll(set.params);
-            for (Object whereParam : where.params()) list.add(whereParam);
+            list.addAll(where.query.params);
             return list;
         }
     }
@@ -775,9 +785,7 @@ public abstract class Sql {
         }
 
         public List<Object> copyParams() {
-            List<Object> list = new ArrayList<Object>();
-            for (Object whereParam : where.params()) list.add(whereParam);
-            return list;
+            return where.copyParams();
         }
     }
 

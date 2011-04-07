@@ -158,9 +158,10 @@ public class SqlSelectTest {
 
     @Test
     public void subWhere() {
-        SqlTest.assertQuery(Sql.select().where(Sql.where("x", 1, 2, 3)), "(x)", 1, 2, 3);
-        SqlTest.assertQuery(Sql.select().orWhere(Sql.where("x", 1, 2, 3)), "(x)", 1, 2, 3);
-        SqlTest.assertQuery(Sql.select().andWhere(Sql.where("x", 1, 2, 3)), "(x)", 1, 2, 3);
+        Sql.Where x = Sql.where("x", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().where(x).where(x), "(x) AND (x)", 1, 2, 3, 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().orWhere(x).orWhere(x), "(x) OR (x)", 1, 2, 3, 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().andWhere(x).andWhere(x), "(x) AND (x)", 1, 2, 3, 1, 2, 3);
     }
 
     @Test
@@ -173,10 +174,34 @@ public class SqlSelectTest {
 
     @Test
     public void having() {
-        assertEquals("HAVING x", Sql.select().having("x").toString());
-        assertEquals("HAVING x, y", Sql.select().having("x").having("y").toString());
         SqlTest.assertQuery(Sql.select().having("x", 1, 2, 3), "HAVING x", 1, 2, 3);
-        SqlTest.assertQuery(Sql.select().having(Sql.where("x", 1, 2, 3)), "HAVING x", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().having("x", 1, 2, 3).having("y", 4, 5, 6), "HAVING x AND y", 1, 2, 3, 4, 5, 6);
+        assertEquals("FROM i HAVING x", Sql.select().from("i").having("x").toString());
+        assertEquals("FROM i HAVING x AND y", Sql.select().from("i").having("x").having("y").toString());
+    }
+
+    @Test
+    public void andHaving() {
+        SqlTest.assertQuery(Sql.select().andHaving("x", 1, 2, 3), "HAVING x", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().andHaving("x", 1, 2, 3).andHaving("y", 4, 5, 6), "HAVING x AND y", 1, 2, 3, 4, 5, 6);
+        assertEquals("FROM i HAVING x", Sql.select().from("i").andHaving("x").toString());
+        assertEquals("FROM i HAVING x AND y", Sql.select().from("i").andHaving("x").andHaving("y").toString());
+    }
+
+    @Test
+    public void orHaving() {
+        SqlTest.assertQuery(Sql.select().orHaving("x", 1, 2, 3), "HAVING x", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().orHaving("x", 1, 2, 3).orHaving("y", 4, 5, 6), "HAVING x OR y", 1, 2, 3, 4, 5, 6);
+        assertEquals("FROM i HAVING x", Sql.select().from("i").orHaving("x").toString());
+        assertEquals("FROM i HAVING x OR y", Sql.select().from("i").orHaving("x").orHaving("y").toString());
+    }
+
+    @Test
+    public void subHaving() {
+        Sql.Where x = Sql.where("x", 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().having(x).having(x), "HAVING (x) AND (x)", 1, 2, 3, 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().orHaving(x).orHaving(x), "HAVING (x) OR (x)", 1, 2, 3, 1, 2, 3);
+        SqlTest.assertQuery(Sql.select().andHaving(x).andHaving(x), "HAVING (x) AND (x)", 1, 2, 3, 1, 2, 3);
     }
 
     @Test
@@ -226,9 +251,11 @@ public class SqlSelectTest {
     }
 
     @Test
-    public void test1() {
+    public void testString() {
         assertEquals(
-            "SELECT a, b, c FROM table INNER JOIN innerJoin LEFT JOIN leftJoin WHERE andWhere OR orWhere GROUP BY groupBy ORDER BY orderBy LIMIT 123",
+            "SELECT a, b, c FROM table INNER JOIN innerJoin LEFT JOIN leftJoin" +
+            " WHERE andWhere OR orWhere GROUP BY groupBy" +
+            " HAVING andHaving OR orHaving ORDER BY orderBy LIMIT 123",
             Sql
                 .select("a", "b", "c")
                 .from("table")
@@ -237,17 +264,21 @@ public class SqlSelectTest {
                 .andWhere("andWhere")
                 .orWhere("orWhere")
                 .groupBy("groupBy")
+                .andHaving("andHaving")
+                .orHaving("orHaving")
                 .orderBy("orderBy")
                 .limit(123)
                 .toString());
     }
 
     @Test
-    public void test2() {
+    public void testCloned() {
         assertEquals(
-            "SELECT a, b, c FROM t1, t2 INNER JOIN ij1 INNER JOIN ij2 LEFT JOIN lj1 LEFT JOIN lj2 WHERE w1 AND w2 OR w3 GROUP BY g1, g2 ORDER BY o1, o2 OFFSET 12 LIMIT 123",
-            Sql
-                .select("a", "b", "c")
+            "SELECT DISTINCT a, b, c FROM t1, t2 INNER JOIN ij1 INNER JOIN ij2 LEFT JOIN lj1 LEFT JOIN lj2" +
+            " WHERE w1 AND w2 OR w3 GROUP BY g1, g2" +
+            " HAVING h1 OR h2 AND h3 ORDER BY o1, o2 OFFSET 12 LIMIT 123",
+            new Sql.Select(Sql
+                .selectDistinct("a", "b", "c")
                 .from("t1", "t2")
                 .innerJoin("ij1").innerJoin("ij2")
                 .leftJoin("lj1").leftJoin("lj2")
@@ -255,9 +286,12 @@ public class SqlSelectTest {
                 .andWhere("w2")
                 .orWhere("w3")
                 .groupBy("g1", "g2")
+                .having("h1")
+                .orHaving("h2")
+                .andHaving("h3")
                 .orderBy("o1", "o2")
                 .offset(12)
-                .limit(123)
+                .limit(123))
                 .toString());
     }
 
