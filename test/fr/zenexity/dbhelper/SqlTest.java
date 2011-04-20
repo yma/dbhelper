@@ -142,6 +142,41 @@ public class SqlTest {
                         .where("x=?", 1)
                         .andWhere("y='?\"'?", 2)
                         .andWhere("z=\"\\\"?\"?", 3)));
+
+        assertEquals("SELECT a WHERE x=1 AND y in (SELECT b WHERE x=2) AND z=3",
+                Sql.resolve(new Sql.Select()
+                        .select("a")
+                        .where("x=?", 1)
+                        .andWhere("y in ?", new Sql.Select()
+                                .select("b")
+                                .where("x=?", 2))
+                        .andWhere("z=?", 3)));
+    }
+
+    @Test
+    public void expands() {
+        assertQuery(Sql.expands(new Sql.Select()
+                .where("x=?", 1)
+                .andWhere("y='?\"'?", 2)
+                .andWhere("z=\"\\\"?\"?", 3)),
+            "x=? AND y='?\"'? AND z=\"\\\"?\"?",
+            1, 2, 3);
+        assertQuery(Sql.expands(new Sql.Update()
+                .where("x=?", 1)
+                .andWhere("y='?\"'?", 2)
+                .andWhere("z=\"\\\"?\"?", 3)),
+            "WHERE x=? AND y='?\"'? AND z=\"\\\"?\"?",
+            1, 2, 3);
+
+        assertQuery(Sql.expands(new Sql.Select()
+                .select("a")
+                .where("x=?", 1)
+                .andWhere("y in ?", new Sql.Select()
+                        .select("b")
+                        .where("x=?", 2))
+                .andWhere("z=?", 3)),
+            "SELECT a WHERE x=? AND y in (SELECT b WHERE x=?) AND z=?",
+            1, 2, 3);
     }
 
     @Test

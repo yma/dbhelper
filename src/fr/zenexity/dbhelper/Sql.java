@@ -165,10 +165,13 @@ public abstract class Sql {
             int index = 0;
             for (Object param : params) {
                 if (param instanceof InlineableQuery) {
-                    expr = resolve(expr, Arrays.asList(param), index, index+1);
+                    FinalQuery expandedExpr = expands(expr, Arrays.asList(param), index, index+1);
+                    expr = expandedExpr.toString();
+                    query.params.addAll(expandedExpr.params);
+                    index += expandedExpr.params.size();
                 } else {
-                    index++;
                     query.param(param);
+                    index++;
                 }
             }
             query.append(expr);
@@ -882,6 +885,55 @@ public abstract class Sql {
         }
         if (paramsIt.hasNext()) throw new IllegalArgumentException("Too many parameters");
         return query;
+    }
+
+    public static FinalQuery expands(InlineableQuery query) { return expands(query.toString(), query.params()); }
+    public static FinalQuery expands(UpdateQuery query) { return expands(query.toString(), query.params()); }
+    private static FinalQuery expands(String query, Iterable<Object> params) { return expands(query, params, 0, -1); }
+    private static FinalQuery expands(String query, Iterable<Object> params, int start, int end) {
+        List<Object> finalParams = new ArrayList<Object>();
+        Iterator<Object> paramsIt = params.iterator();
+        int index = 0;
+        char quote = 0;
+        boolean backslash = false;
+        for (int ndx = 0; ndx < query.length(); ndx++) {
+            if (backslash) {
+                backslash = false;
+                continue;
+            }
+            char ch = query.charAt(ndx);
+            switch (ch) {
+            case '\\':
+                backslash = true;
+                break;
+            case '\'':
+            case '"':
+                quote = quote == 0 ? ch : quote == ch ? 0 : quote;
+                break;
+            case '?':
+                if (quote == 0) {
+                    final Object param;
+                    if (index >= start && (end == -1 || index < end)) {
+                        param = paramsIt.next();
+                        if (param instanceof InlineableQuery) {
+                            InlineableQuery inlineParam = (InlineableQuery) param;
+                            FinalQuery finalParam = expands(inlineParam.toString(), inlineParam.params(), 0, -1);
+                            query = query.substring(0, ndx) +"("+ finalParam.query +")"+ query.substring(ndx+1);
+                            ndx += finalParam.query.length() + 2 - 1;
+                            finalParams.addAll(finalParam.params);
+                        } else {
+                            finalParams.add(param);
+                        }
+                    }
+                    index++;
+                }
+                break;
+            }
+        }
+        if (paramsIt.hasNext()) throw new IllegalArgumentException("Too many parameters");
+        FinalQuery finalQuery = new FinalQuery(query);
+        finalQuery.params.addAll(finalParams);
+        return finalQuery;
     }
 
     public static String table(String name) {

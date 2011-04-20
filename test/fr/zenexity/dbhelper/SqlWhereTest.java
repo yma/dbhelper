@@ -95,8 +95,14 @@ public class SqlWhereTest {
         } catch (IllegalArgumentException e) {
             assertEquals("Too many parameters", e.getMessage());
         }
-        assertWhere(Sql.where("x in ?", Sql.select("a").where("y=?", 1)), "x in (SELECT a WHERE y=1)");
-        assertWhere(Sql.where("i=? and x in ? and z=?", 1, Sql.select("a").where("y=?", 2), 3), "i=? and x in (SELECT a WHERE y=2) and z=?", 1, 3);
+        assertWhere(Sql.where("x in ?", Sql.select("a").where("y=?", 1)), "x in (SELECT a WHERE y=?)", 1);
+        assertWhere(Sql.where("i=? and x in ? and z=?", 1, Sql.select("a").where("y=?", 2), 3), "i=? and x in (SELECT a WHERE y=?) and z=?", 1, 2, 3);
+        assertWhere(Sql.where("i=? and x in ? and z in ?",
+                    1,
+                    Sql.select("a").where("y=?", 2),
+                    Sql.select("b").where("z=?", 3)),
+                "i=? and x in (SELECT a WHERE y=?) and z in (SELECT b WHERE z=?)",
+                1, 2, 3);
     }
 
     @Test
@@ -120,8 +126,25 @@ public class SqlWhereTest {
         } catch (IllegalArgumentException e) {
             assertEquals("Too many parameters", e.getMessage());
         }
-        assertWhere(Sql.where("x in ?", Sql.where("y=?", 1)), "x in (y=1)");
-        assertWhere(Sql.where("i=? and x in ? and z=?", 1, Sql.where("y=?", 2), 3), "i=? and x in (y=2) and z=?", 1, 3);
+        assertWhere(Sql.where("x in ?", Sql.where("y=?", 1)), "x in (y=?)", 1);
+        assertWhere(Sql.where("i=? and x in ? and z=?", 1, Sql.where("y=?", 2), 3), "i=? and x in (y=?) and z=?", 1, 2, 3);
+        assertWhere(Sql.where("i=? and x in ? and z in ?",
+                    1,
+                    Sql.where("y=?", 2),
+                    Sql.where("z=?", 3)),
+                "i=? and x in (y=?) and z in (z=?)",
+                1, 2, 3);
+    }
+
+    @Test
+    public void testInlineableQueryParamsLevel3() {
+        assertWhere(Sql
+                .where("i=? and x in ? and z in ?",
+                        1,
+                        Sql.where("y=?", Sql.where("yy=?", 2)),
+                        Sql.where("z=?", 3)),
+            "i=? and x in (y=(yy=?)) and z in (z=?)",
+            1, 2, 3);
     }
 
     @Test
