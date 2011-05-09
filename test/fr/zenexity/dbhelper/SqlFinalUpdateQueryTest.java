@@ -15,6 +15,7 @@ public class SqlFinalUpdateQueryTest {
     @Test
     public void test() {
         assertQuery(new Sql.FinalUpdateQuery("INSERT INTO x (y) VALUES (1)"), "INSERT INTO x (y) VALUES (1)");
+        assertQuery(new Sql.FinalUpdateQuery("INSERT INTO x (y) VALUES (1)", 1, 2), "INSERT INTO x (y) VALUES (1)", 1, 2);
         assertQuery(new Sql.FinalUpdateQuery(Sql.insert("x").set("y", 1)), "INSERT INTO x (y) VALUES (?)", 1);
     }
 

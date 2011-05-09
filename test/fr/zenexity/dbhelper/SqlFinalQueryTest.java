@@ -15,6 +15,7 @@ public class SqlFinalQueryTest {
     @Test
     public void test() {
         assertQuery(new Sql.FinalQuery("SELECT x WHERE y"), "SELECT x WHERE y");
+        assertQuery(new Sql.FinalQuery("SELECT x WHERE y", 1, 2), "SELECT x WHERE y", 1, 2);
         assertQuery(new Sql.FinalQuery(Sql.select("x").where("y", 1)), "SELECT x WHERE y", 1);
     }
 

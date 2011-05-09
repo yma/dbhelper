@@ -131,6 +131,48 @@ public class SqlTest {
     }
 
     @Test
+    public void testClone() {
+        Sql.Select select = Sql.select("s").from("f").where("w?", 1).having("h?", 2).groupBy("s");
+        Sql.Union union = Sql.union(select, select);
+        Sql.Insert insert = Sql.insert("i").set("x", 1).set("y", 2).set("z", 3);
+        Sql.Update update = Sql.update("u").set("x", 1).set("y", 2).set("z", 3).where("w?", 4);
+        Sql.Delete delete = Sql.delete("d").where("w?", 1);
+        Sql.Where where = Sql.where("w?", 1);
+        Sql.FinalQuery finalQuery = new Sql.FinalQuery("finalQuery?", 1);
+        Sql.FinalUpdateQuery finalUpdateQuery = new Sql.FinalUpdateQuery("finalUpdateQuery?", 1);
+
+        assertEquals(Sql.resolve(select), Sql.resolve(Sql.clone(select)));
+        assertEquals(Sql.resolve(union), Sql.resolve(Sql.clone(union)));
+        assertEquals(Sql.resolve(insert), Sql.resolve(Sql.clone(insert)));
+        assertEquals(Sql.resolve(update), Sql.resolve(Sql.clone(update)));
+        assertEquals(Sql.resolve(delete), Sql.resolve(Sql.clone(delete)));
+        assertEquals(Sql.resolve(where), Sql.resolve(Sql.clone(where)));
+        assertEquals(Sql.resolve(finalQuery), Sql.resolve(Sql.clone(finalQuery)));
+        assertEquals(Sql.resolve(finalUpdateQuery), Sql.resolve(Sql.clone(finalUpdateQuery)));
+
+        assertEquals(Sql.resolve(select), Sql.resolve(Sql.clone((Sql.Query)select)));
+        assertEquals(Sql.resolve(union), Sql.resolve(Sql.clone((Sql.Query)union)));
+        assertEquals(Sql.resolve(insert), Sql.resolve(Sql.clone((Sql.UpdateQuery)insert)));
+        assertEquals(Sql.resolve(update), Sql.resolve(Sql.clone((Sql.UpdateQuery)update)));
+        assertEquals(Sql.resolve(delete), Sql.resolve(Sql.clone((Sql.UpdateQuery)delete)));
+
+        assertEquals(Sql.Select.class, Sql.clone(select).getClass());
+        assertEquals(Sql.Union.class, Sql.clone(union).getClass());
+        assertEquals(Sql.Insert.class, Sql.clone(insert).getClass());
+        assertEquals(Sql.Update.class, Sql.clone(update).getClass());
+        assertEquals(Sql.Delete.class, Sql.clone(delete).getClass());
+        assertEquals(Sql.Where.class, Sql.clone(where).getClass());
+        assertEquals(Sql.FinalQuery.class, Sql.clone(finalQuery).getClass());
+        assertEquals(Sql.FinalUpdateQuery.class, Sql.clone(finalUpdateQuery).getClass());
+
+        assertEquals(Sql.FinalQuery.class, Sql.clone((Sql.Query)select).getClass());
+        assertEquals(Sql.FinalQuery.class, Sql.clone((Sql.Query)union).getClass());
+        assertEquals(Sql.FinalUpdateQuery.class, Sql.clone((Sql.UpdateQuery)insert).getClass());
+        assertEquals(Sql.FinalUpdateQuery.class, Sql.clone((Sql.UpdateQuery)update).getClass());
+        assertEquals(Sql.FinalUpdateQuery.class, Sql.clone((Sql.UpdateQuery)delete).getClass());
+    }
+
+    @Test
     public void resolve() {
         assertEquals("x=1 AND y='?\"'2 AND z=\"\\\"?\"3",
                 Sql.resolve(new Sql.Select()

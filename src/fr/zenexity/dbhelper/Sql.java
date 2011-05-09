@@ -247,6 +247,11 @@ public abstract class Sql {
             params = new ArrayList<Object>();
         }
 
+        public FinalQuery(String src, Object... params) {
+            this(src);
+            for (Object param : params) this.params.add(param);
+        }
+
         public FinalQuery(Query src, Object param) {
             this(src);
             this.params.add(param);
@@ -288,6 +293,11 @@ public abstract class Sql {
         public FinalUpdateQuery(String src) {
             query = src;
             params = new ArrayList<Object>();
+        }
+
+        public FinalUpdateQuery(String src, Object... params) {
+            this(src);
+            for (Object param : params) this.params.add(param);
         }
 
         public FinalUpdateQuery(UpdateQuery src, Object param) {
@@ -837,8 +847,8 @@ public abstract class Sql {
     public static Update clone(Update src) { return new Update(src); }
     public static Delete clone(Delete src) { return new Delete(src); }
     public static Where  clone(Where  src) { return new Where (src); }
-    public static FinalQuery clone(FinalQuery src) { return new FinalQuery(src); }
-    public static FinalUpdateQuery clone(FinalUpdateQuery src) { return new FinalUpdateQuery(src); }
+    public static FinalQuery clone(Query src) { return new FinalQuery(src); }
+    public static FinalUpdateQuery clone(UpdateQuery src) { return new FinalUpdateQuery(src); }
 
     public static FinalQuery finalQuery(Query src) { return new FinalQuery(src); }
     public static FinalQuery finalQuery(Query src, Object param) { return new FinalQuery(src, param); }
