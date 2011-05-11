@@ -381,7 +381,7 @@ public abstract class Sql {
         public Select from(String... tables) { from.add((Object[])tables); return this; }
         public Select from(Class<?> clazz) { from.append(clazz.getSimpleName()); return this; }
         public Select from(Class<?>... classes) { for (Class<?> clazz : classes) from.append(clazz.getSimpleName()); return this; }
-        public Select from(Select subquery, String name) { from.paramsList(subquery.params()).append("(" + subquery + ") AS " + name); return this; }
+        public Select from(Query subquery, String name) { from.paramsList(subquery.params()).append("(" + subquery + ") AS " + name); return this; }
 
         public Select join(String expr, Object... params) { join.params(params).localPrefix("JOIN ").separator(" JOIN ").append(expr); return this; }
         public Select join(String table, Where on) { return join(table +" ON "+ on.toString(), on.paramsArray()); }
