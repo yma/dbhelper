@@ -173,6 +173,16 @@ public class SqlTest {
     }
 
     @Test
+    public void parse() {
+        assertEquals(Sql.parse("select x", Sql.Select.class).getClass(), Sql.Select.class);
+    }
+
+    @Test
+    public void parseSelect() {
+        assertEquals(Sql.parseSelect("select x").getClass(), Sql.Select.class);
+    }
+
+    @Test
     public void resolve() {
         assertEquals("x=1 AND y='?\"'2 AND z=\"\\\"?\"3",
                 Sql.resolve(new Sql.Select()

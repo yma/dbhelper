@@ -149,7 +149,7 @@ public abstract class Sql {
     }
 
     public static class Where implements InlineableQuery {
-        private final ConcatWithParams query;
+        final ConcatWithParams query;
 
         public Where() {
             query = new ConcatWithParams("", null);
@@ -330,15 +330,15 @@ public abstract class Sql {
     }
 
     public static final class Select implements Query {
-        private final Concat select;
-        private final ConcatWithParams from;
-        private final ConcatWithParams join;
+        final Concat select;
+        final ConcatWithParams from;
+        final ConcatWithParams join;
         public final Where where;
-        private final Concat groupBy;
+        final Concat groupBy;
         public final Where having;
-        private final Concat orderBy;
-        private final Concat offset;
-        private final Concat limit;
+        final Concat orderBy;
+        final Concat offset;
+        final Concat limit;
 
         public Select() {
             select = new Concat("SELECT ", ", ");
@@ -371,8 +371,8 @@ public abstract class Sql {
             limit = new Concat(src.limit);
         }
 
-        public Select all() { select.prefix = "SELECT ALL "; return this; }
-        public Select distinct() { select.prefix = "SELECT DISTINCT "; return this; }
+        public Select all() { select.prefix("SELECT ALL "); return this; }
+        public Select distinct() { select.prefix("SELECT DISTINCT "); return this; }
 
         public Select select(Object expression) { select.append(expression); return this; }
         public Select select(Object... expressions) { select.add(expressions); return this; }
@@ -449,10 +449,10 @@ public abstract class Sql {
     }
 
     public static final class Union implements Query {
-        private final ConcatWithParams union;
-        private final Concat orderBy;
-        private final Concat offset;
-        private final Concat limit;
+        final ConcatWithParams union;
+        final Concat orderBy;
+        final Concat offset;
+        final Concat limit;
 
         public Union() {
             union = new ConcatWithParams("", null);
@@ -524,7 +524,7 @@ public abstract class Sql {
             values = new ConcatWithParams(src.values);
         }
 
-        public Insert replace() { into.prefix = "REPLACE INTO "; return this; }
+        public Insert replace() { into.prefix("REPLACE INTO "); return this; }
 
         public Insert into(String table) { into.append(table); return this; }
         public Insert into(Class<?> clazz) { into.append(clazz.getSimpleName()); return this; }
@@ -859,6 +859,9 @@ public abstract class Sql {
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object param) { return new FinalUpdateQuery(src, param); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Object... params) { return new FinalUpdateQuery(src, params); }
     public static FinalUpdateQuery finalQuery(UpdateQuery src, Iterable<?> params) { return new FinalUpdateQuery(src, params); }
+
+    public static <T extends Query> T parse(String query, Class<T> clazz) { return new SqlParser(query).toQuery(clazz); }
+    public static Sql.Select parseSelect(String query) { return new SqlParser(query).toSelect(); }
 
     public static String resolve(InlineableQuery query) { return resolve(query.toString(), query.params()); }
     public static String resolve(UpdateQuery query) { return resolve(query.toString(), query.params()); }
