@@ -32,8 +32,12 @@ public class TestingDatabase {
     public void loadData() {
         String jdbcDriver = System.getProperty("test.dbhelper.jdbcDriver");
         String jdbcURL = System.getProperty("test.dbhelper.jdbcURL");
-        if (jdbcDriver == null || jdbcDriver.length() == 0 || jdbcDriver.charAt(0) == '$') jdbcDriver = "org.hsqldb.jdbcDriver";
-        if (jdbcURL == null || jdbcURL.length() == 0 || jdbcURL.charAt(0) == '$') jdbcURL = "jdbc:hsqldb:mem:dbhelper";
+        if (jdbcDriver == null || jdbcDriver.length() == 0 || jdbcDriver.charAt(0) == '$') {
+            jdbcDriver = "org.h2.Driver";
+        }
+        if (jdbcURL == null || jdbcURL.length() == 0 || jdbcURL.charAt(0) == '$') {
+            jdbcURL = "jdbc:h2:mem:";
+        }
         jdbc = new Jdbc(getConnection(jdbcDriver, jdbcURL));
 
         JdbcStatement.executeUpdate(jdbc.connection, "DROP TABLE IF EXISTS Entry");
