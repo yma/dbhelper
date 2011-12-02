@@ -421,6 +421,25 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
+    public void testClassFactoryWithTextClob() {
+        Set<String> linux = new HashSet<String>();
+        linux.add("Debian 5.0");
+        linux.add("Ubuntu 9.10");
+        linux.add("Fedora 12");
+        linux.add("Mandriva 2010");
+        linux.add("Slackware 13.0");
+
+        Sql.Select query = Sql.select("textClob").from(EntryClob.class);
+
+        for (EntryClob entry : jdbc.execute(query, JdbcResult.classFactory(EntryClob.class))) {
+            assertTrue(linux.contains(entry.textClob));
+            linux.remove(entry.textClob);
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
     public void testMapFactory() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");

@@ -1,9 +1,11 @@
 package fr.zenexity.dbhelper;
 
+import java.io.Reader;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
+import java.sql.Clob;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -155,6 +157,26 @@ public class JdbcResult {
                     return clazz.getEnumConstants()[((Number)value).intValue()];
                 } else if (value instanceof String) {
                     return (T) Enum.valueOf((Class)clazz, (String)value);
+                }
+            }
+
+            if (value instanceof Clob) {
+                Clob clob = ((Clob) value);
+                long length =  clob.length();
+                if (length < Integer.MIN_VALUE || length > Integer.MAX_VALUE) {
+                    throw new RuntimeException("CLOB too long : length "+ length);
+                }
+
+                if (clazz == String.class) {
+                    Reader reader = clob.getCharacterStream();
+                    try {
+                        StringBuffer str = new StringBuffer((int) length);
+                        char[] buf = new char[1024];
+                        for (int n; (n = reader.read(buf)) != -1; ) str.append(buf, 0, n);
+                        return (T) str.toString();
+                    } finally {
+                        reader.close();
+                    }
                 }
             }
 

@@ -23,6 +23,10 @@ public class TestingDatabase {
         public String fullName;
     }
 
+    public static class EntryClob {
+        public String textClob;
+    }
+
     public static Connection getConnection(String driverClass, String connectionURL) {
         try {
             Class.forName(driverClass);
@@ -44,9 +48,14 @@ public class TestingDatabase {
         }
         jdbc = new Jdbc(getConnection(jdbcDriver, jdbcURL));
 
+        boolean hsqldb = jdbcDriver.contains("hsqldb");
+
         JdbcStatement.executeUpdate(jdbc.connection, "DROP TABLE IF EXISTS Entry");
         JdbcStatement.executeUpdate(jdbc.connection, "CREATE TABLE Entry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT)");
         JdbcStatement.executeUpdate(jdbc.connection, "CREATE TABLE ExEntry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT, fullName VARCHAR(255))");
+        JdbcStatement.executeUpdate(jdbc.connection, hsqldb ?
+                "CREATE TABLE EntryClob (textClob VARCHAR(255))" : // CLOB don't work with HSQLDB
+                "CREATE TABLE EntryClob (textClob LONGTEXT)");
 
         JdbcStatement insertEntry = jdbc.newStatement("INSERT INTO Entry (distName, version, num, typeName, typeOrdinal) VALUES (?, ?, ?, ?, ?)");
         try {
@@ -66,6 +75,17 @@ public class TestingDatabase {
             insertExEntry.executeUpdate("Fedora", "12", 12, Entry.DistType.FEDORA.name(), Entry.DistType.FEDORA.ordinal(), "Fedora 12");
             insertExEntry.executeUpdate("Mandriva", "2010", 2010, Entry.DistType.MANDRIVA.name(), Entry.DistType.MANDRIVA.ordinal(), "Mandriva 2010");
             insertExEntry.executeUpdate("Slackware", "13.0", 13, Entry.DistType.SLACKWARE.name(), Entry.DistType.SLACKWARE.ordinal(), "Slackware 13.0");
+        } finally {
+            insertExEntry.close();
+        }
+
+        JdbcStatement insertEntryClob = jdbc.newStatement("INSERT INTO EntryClob (textClob) VALUES (?)");
+        try {
+            insertEntryClob.executeUpdate("Debian 5.0");
+            insertEntryClob.executeUpdate("Ubuntu 9.10");
+            insertEntryClob.executeUpdate("Fedora 12");
+            insertEntryClob.executeUpdate("Mandriva 2010");
+            insertEntryClob.executeUpdate("Slackware 13.0");
         } finally {
             insertExEntry.close();
         }
