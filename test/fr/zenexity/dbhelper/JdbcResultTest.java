@@ -401,6 +401,26 @@ public class JdbcResultTest extends TestingDatabase {
     }
 
     @Test
+    public void testClassFactoryWithExEntry() {
+        Map<String, String> linux = new HashMap<String, String>();
+        linux.put("Debian", "5.0");
+        linux.put("Ubuntu", "9.10");
+        linux.put("Fedora", "12");
+        linux.put("Mandriva", "2010");
+        linux.put("Slackware", "13.0");
+
+        Sql.Select query = Sql.select("*").from(ExEntry.class);
+
+        for (ExEntry entry : jdbc.execute(query, JdbcResult.classFactory(ExEntry.class))) {
+            assertEquals(linux.get(entry.distName), entry.version);
+            assertEquals(entry.distName +" "+ entry.version, entry.fullName);
+            linux.remove(entry.distName);
+        }
+
+        assertEquals(0, linux.size());
+    }
+
+    @Test
     public void testMapFactory() {
         Map<String, String> linux = new HashMap<String, String>();
         linux.put("Debian", "5.0");
