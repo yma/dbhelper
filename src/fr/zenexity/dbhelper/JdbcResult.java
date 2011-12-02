@@ -140,7 +140,7 @@ public class JdbcResult {
         return value;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T castValue(Class<T> clazz, Object value) throws JdbcResultException {
         try {
             value = normalizeValue(value);
@@ -391,9 +391,8 @@ public class JdbcResult {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public List<T> create(ResultSet result) throws SQLException, JdbcResultException {
-            List<T> list = new ArrayList(columns.size());
+            List<T> list = new ArrayList<T>(columns.size());
             int i = 0;
             try {
                 for (Integer column : columns) {
