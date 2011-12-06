@@ -1,11 +1,8 @@
 package fr.zenexity.dbhelper;
 
-import java.io.Reader;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.math.BigDecimal;
-import java.sql.Clob;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -26,6 +23,13 @@ public class JdbcResult {
     public interface Factory<T> {
         void init(ResultSet result) throws SQLException, JdbcResultException;
         T create(ResultSet result) throws SQLException, JdbcResultException;
+    }
+
+
+    public static final JdbcValue jdbcValue = new JdbcValue();
+
+    static {
+        jdbcValue.register(new JdbcValue.StandardAdapter());
     }
 
 
@@ -137,55 +141,6 @@ public class JdbcResult {
     }
 
 
-    public static Object normalizeValue(Object value) {
-        if (value instanceof BigDecimal) value = new Long(((BigDecimal)value).longValue());
-        return value;
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static <T> T castValue(Class<T> clazz, Object value) throws JdbcResultException {
-        try {
-            value = normalizeValue(value);
-
-            //TODO cast to primitive types
-            if (clazz.isPrimitive()) {
-                return (T) value;
-            }
-
-            if (clazz.isEnum()) {
-                if (value instanceof Number) {
-                    return clazz.getEnumConstants()[((Number)value).intValue()];
-                } else if (value instanceof String) {
-                    return (T) Enum.valueOf((Class)clazz, (String)value);
-                }
-            }
-
-            if (value instanceof Clob) {
-                Clob clob = ((Clob) value);
-                long length =  clob.length();
-                if (length < Integer.MIN_VALUE || length > Integer.MAX_VALUE) {
-                    throw new RuntimeException("CLOB too long : length "+ length);
-                }
-
-                if (clazz == String.class) {
-                    Reader reader = clob.getCharacterStream();
-                    try {
-                        StringBuffer str = new StringBuffer((int) length);
-                        char[] buf = new char[1024];
-                        for (int n; (n = reader.read(buf)) != -1; ) str.append(buf, 0, n);
-                        return (T) str.toString();
-                    } finally {
-                        reader.close();
-                    }
-                }
-            }
-
-            return clazz.cast(value);
-        } catch (Exception e) {
-            throw new JdbcResultException(value+" ("+value.getClass().getName()+") to "+clazz.getName(), e);
-        }
-    }
-
     public static class PrimitiveFactory<T> implements Factory<T> {
         private final Class<T> objectClass;
         private final String field;
@@ -218,13 +173,11 @@ public class JdbcResult {
 
         public T create(ResultSet result) throws SQLException, JdbcResultException {
             try {
-                return castValue(objectClass, result.getObject(columnIndex));
+                return jdbcValue.cast(objectClass, result.getObject(columnIndex));
             } catch (SQLException e) {
                 throw e;
-            } catch (JdbcResultException e) {
-                throw new JdbcResultException(field+"["+columnIndex+"]: "+e.getMessage(), e.getCause());
             } catch (Exception e) {
-                throw new JdbcResultException(e);
+                throw new JdbcResultException(field +"["+ columnIndex +"]", e);
             }
         }
     }
@@ -287,16 +240,14 @@ public class JdbcResult {
                 for (ColumnInfo column : columns) {
                     currentColumn = column;
                     Object value = result.getObject(column.index);
-                    column.field.set(obj, castValue(column.field.getType(), value));
+                    column.field.set(obj, jdbcValue.cast(column.field.getType(), value));
                 }
                 return obj;
             } catch (SQLException e) {
                 throw e;
-            } catch (JdbcResultException e) {
-                if (currentColumn == null) throw e;
-                throw new JdbcResultException(currentColumn.field.getName()+"["+currentColumn.index+"]: "+e.getMessage(), e.getCause());
             } catch (Exception e) {
-                throw new JdbcResultException(e);
+                if (currentColumn == null) throw new JdbcResultException(e);
+                throw new JdbcResultException(currentColumn.field.getName() +"["+ currentColumn.index +"]", e);
             }
         }
 
@@ -330,7 +281,7 @@ public class JdbcResult {
             try {
                 for (ColumnInfo column : columns) {
                     Object value = result.getObject(column.index);
-                    map.put(column.name, normalizeValue(value));
+                    map.put(column.name, jdbcValue.normalize(value));
                 }
             } catch (SQLException e) {
                 throw e;
@@ -419,15 +370,13 @@ public class JdbcResult {
             try {
                 for (Integer column : columns) {
                     Object value = result.getObject(column);
-                    list.add(castValue(objectClass, value));
+                    list.add(jdbcValue.cast(objectClass, value));
                     i++;
                 }
             } catch (SQLException e) {
                 throw e;
-            } catch (JdbcResultException e) {
-                throw new JdbcResultException("List["+i+"]: "+e.getMessage(), e.getCause());
             } catch (Exception e) {
-                throw new JdbcResultException(e);
+                throw new JdbcResultException("List["+ i +"]", e);
             }
             return list;
         }
@@ -449,15 +398,13 @@ public class JdbcResult {
             try {
                 for (Integer column : columns) {
                     Object value = result.getObject(column);
-                    array[i] = castValue(objectClass, value);
+                    array[i] = jdbcValue.cast(objectClass, value);
                     i++;
                 }
             } catch (SQLException e) {
                 throw e;
-            } catch (JdbcResultException e) {
-                throw new JdbcResultException("Array["+i+"]: "+e.getMessage(), e.getCause());
             } catch (Exception e) {
-                throw new JdbcResultException(e);
+                throw new JdbcResultException("Array["+ i +"]", e);
             }
             return array;
         }

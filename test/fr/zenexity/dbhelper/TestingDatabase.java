@@ -49,14 +49,10 @@ public class TestingDatabase {
         jdbc = new Jdbc(getConnection(jdbcDriver, jdbcURL));
 
         boolean hsqldb = jdbcDriver.contains("hsqldb");
+        String longText = hsqldb ? "LONGVARCHAR" : "LONGTEXT";
 
         JdbcStatement.executeUpdate(jdbc.connection, "DROP TABLE IF EXISTS Entry");
         JdbcStatement.executeUpdate(jdbc.connection, "CREATE TABLE Entry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT)");
-        JdbcStatement.executeUpdate(jdbc.connection, "CREATE TABLE ExEntry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT, fullName VARCHAR(255))");
-        JdbcStatement.executeUpdate(jdbc.connection, hsqldb ?
-                "CREATE TABLE EntryClob (textClob VARCHAR(255))" : // CLOB don't work with HSQLDB
-                "CREATE TABLE EntryClob (textClob LONGTEXT)");
-
         JdbcStatement insertEntry = jdbc.newStatement("INSERT INTO Entry (distName, version, num, typeName, typeOrdinal) VALUES (?, ?, ?, ?, ?)");
         try {
             insertEntry.executeUpdate("Debian", "5.0", 5, Entry.DistType.DEBIAN.name(), Entry.DistType.DEBIAN.ordinal());
@@ -68,6 +64,8 @@ public class TestingDatabase {
             insertEntry.close();
         }
 
+        JdbcStatement.executeUpdate(jdbc.connection, "DROP TABLE IF EXISTS ExEntry");
+        JdbcStatement.executeUpdate(jdbc.connection, "CREATE TABLE ExEntry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT, fullName VARCHAR(255))");
         JdbcStatement insertExEntry = jdbc.newStatement("INSERT INTO ExEntry (distName, version, num, typeName, typeOrdinal, fullName) VALUES (?, ?, ?, ?, ?, ?)");
         try {
             insertExEntry.executeUpdate("Debian", "5.0", 5, Entry.DistType.DEBIAN.name(), Entry.DistType.DEBIAN.ordinal(), "Debian 5.0");
@@ -79,6 +77,8 @@ public class TestingDatabase {
             insertExEntry.close();
         }
 
+        JdbcStatement.executeUpdate(jdbc.connection, "DROP TABLE IF EXISTS EntryClob");
+        JdbcStatement.executeUpdate(jdbc.connection, "CREATE TABLE EntryClob (textClob "+ longText +")");
         JdbcStatement insertEntryClob = jdbc.newStatement("INSERT INTO EntryClob (textClob) VALUES (?)");
         try {
             insertEntryClob.executeUpdate("Debian 5.0");

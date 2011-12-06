@@ -2,11 +2,8 @@ package fr.zenexity.dbhelper;
 
 import static org.junit.Assert.*;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,31 +36,6 @@ public class JdbcResultTest extends TestingDatabase {
         assertTrue(JdbcResult.primitive(boolean.class));
 
         assertFalse(JdbcResult.primitive(JdbcResult.class));
-    }
-
-    @Test
-    public void testNormalize() {
-        assertEquals(new Integer(213), JdbcResult.normalizeValue(new Integer(213)));
-        assertEquals(new Long(213), JdbcResult.normalizeValue(new Long(213)));
-        assertEquals(new Long(213), JdbcResult.normalizeValue(new BigDecimal(213)));
-    }
-
-    @Test
-    public void testCastValue() throws JdbcResultException {
-        assertEquals(new Integer(213), JdbcResult.castValue(Integer.class, new Integer(213)));
-    }
-
-    @Test
-    public void testEnumCastValue() throws JdbcResultException {
-        assertEquals(Entry.DistType.DEBIAN, JdbcResult.castValue(Entry.DistType.class, "DEBIAN"));
-        assertEquals(Entry.DistType.UBUNTU, JdbcResult.castValue(Entry.DistType.class, Entry.DistType.UBUNTU.ordinal()));
-        assertEquals(Entry.DistType.FEDORA, JdbcResult.castValue(Entry.DistType.class, Entry.DistType.FEDORA));
-    }
-
-    @Test
-    public void testDateCastDateValue() throws JdbcResultException {
-        Date date = new Date();
-        assertEquals(date, JdbcResult.castValue(Date.class, new Timestamp(date.getTime())));
     }
 
     @Test
@@ -166,8 +138,10 @@ public class JdbcResultTest extends TestingDatabase {
             fail("JdbcIteratorException expected");
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
-            assertEquals("num[3]: 5.0 (java.lang.Double) to java.lang.Float", e.getCause().getMessage());
-            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+            assertEquals("num[3]", e.getCause().getMessage());
+            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals("5.0 (java.lang.Double) to java.lang.Float", e.getCause().getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }
     }
 
@@ -317,8 +291,10 @@ public class JdbcResultTest extends TestingDatabase {
             fail("JdbcIteratorException expected");
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
-            assertEquals("num[1]: 5.0 (java.lang.Double) to java.lang.Float", e.getCause().getMessage());
-            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+            assertEquals("num[1]", e.getCause().getMessage());
+            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals("5.0 (java.lang.Double) to java.lang.Float", e.getCause().getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }
     }
 
@@ -565,8 +541,10 @@ public class JdbcResultTest extends TestingDatabase {
             fail("JdbcIteratorException expected");
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
-            assertEquals("List[1]: 5.0 (java.lang.Double) to java.lang.String", e.getCause().getMessage());
-            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+            assertEquals("List[1]", e.getCause().getMessage());
+            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals("5.0 (java.lang.Double) to java.lang.String", e.getCause().getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }
     }
 
@@ -677,8 +655,10 @@ public class JdbcResultTest extends TestingDatabase {
             fail("JdbcIteratorException expected");
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
-            assertEquals("Array[1]: 5.0 (java.lang.Double) to java.lang.String", e.getCause().getMessage());
-            assertEquals(ClassCastException.class, e.getCause().getCause().getClass());
+            assertEquals("Array[1]", e.getCause().getMessage());
+            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals("5.0 (java.lang.Double) to java.lang.String", e.getCause().getCause().getMessage());
+            assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }
     }
 
