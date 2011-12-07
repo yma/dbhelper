@@ -81,7 +81,7 @@ public class JdbcStatement {
     public void params(Object... params) throws JdbcStatementException {
         try {
             for (Object param : params)
-                statement.setObject(++index, param);
+                statement.setObject(++index, JdbcResult.jdbcValue.normalizeValueForSql(param));
         } catch (SQLException e) {
             throw new JdbcStatementException(e);
         }
@@ -90,7 +90,7 @@ public class JdbcStatement {
     public void paramsList(Iterable<Object> params) throws JdbcStatementException {
         try {
             for (Object param : params)
-                statement.setObject(++index, param);
+                statement.setObject(++index, JdbcResult.jdbcValue.normalizeValueForSql(param));
         } catch (SQLException e) {
             throw new JdbcStatementException(e);
         }

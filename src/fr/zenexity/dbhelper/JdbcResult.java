@@ -30,6 +30,7 @@ public class JdbcResult {
 
     static {
         jdbcValue.register(new JdbcValue.StandardAdapter());
+        jdbcValue.registerValueFromSqlNormalizer(new JdbcValue.StandardValueFromSqlNormalizer());
     }
 
 
@@ -281,7 +282,7 @@ public class JdbcResult {
             try {
                 for (ColumnInfo column : columns) {
                     Object value = result.getObject(column.index);
-                    map.put(column.name, jdbcValue.normalize(value));
+                    map.put(column.name, jdbcValue.normalizeValueFromSql(value));
                 }
             } catch (SQLException e) {
                 throw e;

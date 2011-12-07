@@ -16,13 +16,21 @@ public class JdbcValueTest extends TestingDatabase {
     @Before
     public void register() {
         jdbcValue.register(new JdbcValue.StandardAdapter());
+        jdbcValue.registerValueFromSqlNormalizer(new JdbcValue.StandardValueFromSqlNormalizer());
     }
 
     @Test
-    public void testNormalize() {
-        assertEquals(new Integer(213), jdbcValue.normalize(new Integer(213)));
-        assertEquals(new Long(213), jdbcValue.normalize(new Long(213)));
-        assertEquals(new Long(213), jdbcValue.normalize(new BigDecimal(213)));
+    public void testNormalizeValueFromSql() {
+        assertEquals(new Integer(213), jdbcValue.normalizeValueFromSql(new Integer(213)));
+        assertEquals(new Long(213), jdbcValue.normalizeValueFromSql(new Long(213)));
+        assertEquals(new Long(213), jdbcValue.normalizeValueFromSql(new BigDecimal(213)));
+    }
+
+    @Test
+    public void testNormalizeValueForSql() {
+        assertEquals(new Integer(213), jdbcValue.normalizeValueForSql(new Integer(213)));
+        assertEquals(new Long(213), jdbcValue.normalizeValueForSql(new Long(213)));
+        assertEquals(new BigDecimal(213), jdbcValue.normalizeValueForSql(new BigDecimal(213)));
     }
 
     @Test

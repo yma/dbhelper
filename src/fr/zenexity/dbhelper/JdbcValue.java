@@ -6,39 +6,54 @@ import java.math.BigDecimal;
 import java.sql.Clob;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class JdbcValue {
 
-    public interface Adapter {
+    public interface Priority {
         int priority();
+    }
+
+    public interface Adapter extends Priority {
         <T> T cast(Class<T> clazz, Object value) throws Exception;
+    }
+
+    public interface Normalizer extends Priority {
+        Object convert(Object value) throws Exception;
     }
 
 
     private final List<Adapter> adapters = new ArrayList<Adapter>();
+    private final List<Normalizer> valueFromSqlNormalizers = new ArrayList<Normalizer>();
+    private final List<Normalizer> valueForSqlNormalizers = new ArrayList<Normalizer>();
+
 
     public void register(Adapter adapter) {
         adapters.add(adapter);
-        Collections.sort(adapters, new Comparator<Adapter>() {
-            public int compare(Adapter o1, Adapter o2) {
-                return Integer.valueOf(o1.priority()).compareTo(Integer.valueOf(o2.priority()));
-            }
-        });
+        Collections.sort(adapters, priorityComparator());
     }
 
-    public Object normalize(Object value) throws JdbcValueException {
-        try {
-            if (value instanceof BigDecimal) return new Long(((BigDecimal)value).longValue());
-            if (value instanceof Clob) return clobToString((Clob) value);
-            return value;
-        } catch (Exception e) {
-            String valueClass = value == null ? null : value.getClass().getName();
-            throw new JdbcValueException("normalize "+ value +" ("+ valueClass +")", e);
-        }
+    public void registerValueFromSqlNormalizer(Normalizer normalizer) {
+        valueFromSqlNormalizers.add(normalizer);
+        Collections.sort(valueFromSqlNormalizers, priorityComparator());
     }
+
+    public void registerValueForSqlNormalizer(Normalizer normalizer) {
+        valueForSqlNormalizers.add(normalizer);
+        Collections.sort(valueForSqlNormalizers, priorityComparator());
+    }
+
+    public static <T extends Priority> Comparator<T> priorityComparator() {
+        return new Comparator<T>() {
+            public int compare(T o1, T o2) {
+                return Integer.valueOf(o1.priority()).compareTo(Integer.valueOf(o2.priority()));
+            }
+        };
+    }
+
 
     public <T> T cast(Class<T> clazz, Object value) throws JdbcValueException {
         try {
@@ -51,6 +66,27 @@ public class JdbcValue {
             String valueClass = value == null ? null : value.getClass().getName();
             throw new JdbcValueException(value +" ("+ valueClass +") to "+ clazz.getName(), e);
         }
+    }
+
+    public static Object normalize(Collection<Normalizer> normalizers, Object value) throws JdbcValueException {
+        try {
+            if (value != null) for (Normalizer normalizer : normalizers) {
+                Object result = normalizer.convert(value);
+                if (result != null) return result;
+            }
+            return value;
+        } catch (Exception e) {
+            String valueClass = value == null ? null : value.getClass().getName();
+            throw new JdbcValueException("normalize "+ value +" ("+ valueClass +")", e);
+        }
+    }
+
+    public Object normalizeValueFromSql(Object value) throws JdbcValueException {
+        return normalize(valueFromSqlNormalizers, value);
+    }
+
+    public Object normalizeValueForSql(Object value) throws JdbcValueException {
+        return normalize(valueForSqlNormalizers, value);
     }
 
     public static class StandardAdapter implements Adapter {
@@ -78,6 +114,16 @@ public class JdbcValue {
             }
 
             return null;
+        }
+    }
+
+    public static class StandardValueFromSqlNormalizer implements Normalizer {
+        public int priority() { return 1000; }
+
+        public Object convert(Object value) throws Exception {
+            if (value instanceof BigDecimal) return new Long(((BigDecimal)value).longValue());
+            if (value instanceof Clob) return clobToString((Clob) value);
+            return value;
         }
     }
 
