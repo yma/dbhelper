@@ -31,6 +31,16 @@ public class JdbcValue {
     private final List<Normalizer> valueForSqlNormalizers = new ArrayList<Normalizer>();
 
 
+    static final JdbcValue defaultAdapters = JdbcValue.createDefaultAdapters();
+
+    public static JdbcValue createDefaultAdapters() {
+        JdbcValue jdbcValue = new JdbcValue();
+        jdbcValue.register(new StandardAdapter());
+        jdbcValue.registerValueFromSqlNormalizer(new StandardValueFromSqlNormalizer());
+        return jdbcValue;
+    }
+
+
     public void register(Adapter adapter) {
         adapters.add(adapter);
         Collections.sort(adapters, priorityComparator());
@@ -57,7 +67,7 @@ public class JdbcValue {
 
     public <T> T cast(Class<T> clazz, Object value) throws JdbcValueException {
         try {
-            if (value != null) for (Adapter valueAdapter : adapters) {
+            for (Adapter valueAdapter : adapters) {
                 T result = valueAdapter.cast(clazz, value);
                 if (result != null) return result;
             }
@@ -70,7 +80,7 @@ public class JdbcValue {
 
     public static Object normalize(Collection<Normalizer> normalizers, Object value) throws JdbcValueException {
         try {
-            if (value != null) for (Normalizer normalizer : normalizers) {
+            for (Normalizer normalizer : normalizers) {
                 Object result = normalizer.convert(value);
                 if (result != null) return result;
             }

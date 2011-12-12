@@ -26,14 +26,6 @@ public class JdbcResult {
     }
 
 
-    public static final JdbcValue jdbcValue = new JdbcValue();
-
-    static {
-        jdbcValue.register(new JdbcValue.StandardAdapter());
-        jdbcValue.registerValueFromSqlNormalizer(new JdbcValue.StandardValueFromSqlNormalizer());
-    }
-
-
     public static <T> boolean primitive(Class<T> objectClass) {
         return objectClass.isPrimitive()
             || Number.class.isAssignableFrom(objectClass)
@@ -42,118 +34,193 @@ public class JdbcResult {
             || Boolean.class.isAssignableFrom(objectClass);
     }
 
+    public static <T> Factory<T> buildFactory(JdbcValue jdbcValue, Class<T> objectClass) {
+        return primitive(objectClass)
+                ? primitiveFactory(jdbcValue, objectClass)
+                : classFactory(jdbcValue, objectClass);
+    }
+
+    public static <T> Factory<T> buildFactory(JdbcValue jdbcValue, Class<T> objectClass, String... fields) {
+        return primitive(objectClass)
+                ? primitiveFactory(jdbcValue, objectClass, fields == null || fields.length == 0 ? null : fields[0])
+                : classFactory(jdbcValue, objectClass, fields);
+    }
+
+    public static <T> Factory<T> buildFactory(JdbcValue jdbcValue, Class<T> objectClass, List<String> fields) {
+        return primitive(objectClass)
+                ? primitiveFactory(jdbcValue, objectClass, fields == null || fields.isEmpty() ? null : fields.get(0))
+                : classFactory(jdbcValue, objectClass, fields);
+    }
+
     public static <T> Factory<T> buildFactory(Class<T> objectClass) {
-        return primitive(objectClass)
-                ? primitiveFactory(objectClass)
-                : classFactory(objectClass);
+        return buildFactory(JdbcValue.defaultAdapters, objectClass);
     }
-
     public static <T> Factory<T> buildFactory(Class<T> objectClass, String... fields) {
-        return primitive(objectClass)
-                ? primitiveFactory(objectClass, fields == null || fields.length == 0 ? null : fields[0])
-                : classFactory(objectClass, fields);
+        return buildFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
-
     public static <T> Factory<T> buildFactory(Class<T> objectClass, List<String> fields) {
-        return primitive(objectClass)
-                ? primitiveFactory(objectClass, fields == null || fields.isEmpty() ? null : fields.get(0))
-                : classFactory(objectClass, fields);
+        return buildFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
 
+
+    public static <T> PrimitiveFactory<T> primitiveFactory(JdbcValue jdbcValue, Class<T> objectClass) {
+        return new PrimitiveFactory<T>(jdbcValue, objectClass, null);
+    }
+
+    public static <T> PrimitiveFactory<T> primitiveFactory(JdbcValue jdbcValue, Class<T> objectClass, int columnIndex) {
+        return new PrimitiveFactory<T>(jdbcValue, objectClass, columnIndex);
+    }
+
+    public static <T> PrimitiveFactory<T> primitiveFactory(JdbcValue jdbcValue, Class<T> objectClass, String field) {
+        return new PrimitiveFactory<T>(jdbcValue, objectClass, field);
+    }
 
     public static <T> PrimitiveFactory<T> primitiveFactory(Class<T> objectClass) {
-        return new PrimitiveFactory<T>(objectClass, null);
+        return primitiveFactory(JdbcValue.defaultAdapters, objectClass);
     }
-
     public static <T> PrimitiveFactory<T> primitiveFactory(Class<T> objectClass, int columnIndex) {
-        return new PrimitiveFactory<T>(objectClass, columnIndex);
+        return primitiveFactory(JdbcValue.defaultAdapters, objectClass, columnIndex);
     }
-
     public static <T> PrimitiveFactory<T> primitiveFactory(Class<T> objectClass, String field) {
-        return new PrimitiveFactory<T>(objectClass, field);
+        return primitiveFactory(JdbcValue.defaultAdapters, objectClass, field);
     }
 
+
+    public static <T> ClassFactory<T> classFactory(JdbcValue jdbcValue, Class<T> objectClass) {
+        return new ClassFactory<T>(jdbcValue, objectClass, null);
+    }
+
+    public static <T> ClassFactory<T> classFactory(JdbcValue jdbcValue, Class<T> objectClass, String... fields) {
+        return new ClassFactory<T>(jdbcValue, objectClass, Arrays.asList(fields));
+    }
+
+    public static <T> ClassFactory<T> classFactory(JdbcValue jdbcValue, Class<T> objectClass, List<String> fields) {
+        return new ClassFactory<T>(jdbcValue, objectClass, fields);
+    }
 
     public static <T> ClassFactory<T> classFactory(Class<T> objectClass) {
-        return new ClassFactory<T>(objectClass, null);
+        return classFactory(JdbcValue.defaultAdapters, objectClass);
     }
-
     public static <T> ClassFactory<T> classFactory(Class<T> objectClass, String... fields) {
-        return new ClassFactory<T>(objectClass, Arrays.asList(fields));
+        return classFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
-
     public static <T> ClassFactory<T> classFactory(Class<T> objectClass, List<String> fields) {
-        return new ClassFactory<T>(objectClass, fields);
+        return classFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
 
+
+    public static MapFactory mapFactory(JdbcValue jdbcValue) {
+        return new MapFactory(jdbcValue);
+    }
 
     public static MapFactory mapFactory() {
-        return new MapFactory();
+        return mapFactory(JdbcValue.defaultAdapters);
     }
 
+
+    public static ListFactory<Object> listFactory(JdbcValue jdbcValue) {
+        return new ListFactory<Object>(jdbcValue, Object.class, null);
+    }
+
+    public static ListFactory<Object> listFactory(JdbcValue jdbcValue, String... fields) {
+        return new ListFactory<Object>(jdbcValue, Object.class, Arrays.asList(fields));
+    }
+
+    public static ListFactory<Object> listFactory(JdbcValue jdbcValue, List<String> fields) {
+        return new ListFactory<Object>(jdbcValue, Object.class, fields);
+    }
+
+    public static <T> ListFactory<T> listFactory(JdbcValue jdbcValue, Class<T> objectClass) {
+        return new ListFactory<T>(jdbcValue, objectClass, null);
+    }
+
+    public static <T> ListFactory<T> listFactory(JdbcValue jdbcValue, Class<T> objectClass, String... fields) {
+        return new ListFactory<T>(jdbcValue, objectClass, Arrays.asList(fields));
+    }
+
+    public static <T> ListFactory<T> listFactory(JdbcValue jdbcValue, Class<T> objectClass, List<String> fields) {
+        return new ListFactory<T>(jdbcValue, objectClass, fields);
+    }
 
     public static ListFactory<Object> listFactory() {
-        return new ListFactory<Object>(Object.class, null);
+        return listFactory(JdbcValue.defaultAdapters);
     }
-
     public static ListFactory<Object> listFactory(String... fields) {
-        return new ListFactory<Object>(Object.class, Arrays.asList(fields));
+        return listFactory(JdbcValue.defaultAdapters, fields);
     }
-
     public static ListFactory<Object> listFactory(List<String> fields) {
-        return new ListFactory<Object>(Object.class, fields);
+        return listFactory(JdbcValue.defaultAdapters, fields);
     }
-
-    public static <T> ListFactory<T> ListFactory(Class<T> objectClass) {
-        return new ListFactory<T>(objectClass, null);
+    public static <T> ListFactory<T> listFactory(Class<T> objectClass) {
+        return listFactory(JdbcValue.defaultAdapters, objectClass);
     }
-
     public static <T> ListFactory<T> listFactory(Class<T> objectClass, String... fields) {
-        return new ListFactory<T>(objectClass, Arrays.asList(fields));
+        return listFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
-
     public static <T> ListFactory<T> listFactory(Class<T> objectClass, List<String> fields) {
-        return new ListFactory<T>(objectClass, fields);
+        return listFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
 
+
+    public static ArrayFactory<Object> arrayFactory(JdbcValue jdbcValue) {
+        return new ArrayFactory<Object>(jdbcValue, Object.class, null);
+    }
+
+    public static ArrayFactory<Object> arrayFactory(JdbcValue jdbcValue, String... fields) {
+        return new ArrayFactory<Object>(jdbcValue, Object.class, Arrays.asList(fields));
+    }
+
+    public static ArrayFactory<Object> arrayFactory(JdbcValue jdbcValue, List<String> fields) {
+        return new ArrayFactory<Object>(jdbcValue, Object.class, fields);
+    }
+
+    public static <T> ArrayFactory<T> arrayFactory(JdbcValue jdbcValue, Class<T> objectClass) {
+        return new ArrayFactory<T>(jdbcValue, objectClass, null);
+    }
+
+    public static <T> ArrayFactory<T> arrayFactory(JdbcValue jdbcValue, Class<T> objectClass, String... fields) {
+        return new ArrayFactory<T>(jdbcValue, objectClass, Arrays.asList(fields));
+    }
+
+    public static <T> ArrayFactory<T> arrayFactory(JdbcValue jdbcValue, Class<T> objectClass, List<String> fields) {
+        return new ArrayFactory<T>(jdbcValue, objectClass, fields);
+    }
 
     public static ArrayFactory<Object> arrayFactory() {
-        return new ArrayFactory<Object>(Object.class, null);
+        return arrayFactory(JdbcValue.defaultAdapters);
     }
-
     public static ArrayFactory<Object> arrayFactory(String... fields) {
-        return new ArrayFactory<Object>(Object.class, Arrays.asList(fields));
+        return arrayFactory(JdbcValue.defaultAdapters, fields);
     }
-
     public static ArrayFactory<Object> arrayFactory(List<String> fields) {
-        return new ArrayFactory<Object>(Object.class, fields);
+        return arrayFactory(JdbcValue.defaultAdapters, fields);
     }
-
     public static <T> ArrayFactory<T> arrayFactory(Class<T> objectClass) {
-        return new ArrayFactory<T>(objectClass, null);
+        return arrayFactory(JdbcValue.defaultAdapters, objectClass);
     }
-
     public static <T> ArrayFactory<T> arrayFactory(Class<T> objectClass, String... fields) {
-        return new ArrayFactory<T>(objectClass, Arrays.asList(fields));
+        return arrayFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
-
     public static <T> ArrayFactory<T> arrayFactory(Class<T> objectClass, List<String> fields) {
-        return new ArrayFactory<T>(objectClass, fields);
+        return arrayFactory(JdbcValue.defaultAdapters, objectClass, fields);
     }
 
 
     public static class PrimitiveFactory<T> implements Factory<T> {
+        private final JdbcValue jdbcValue;
         private final Class<T> objectClass;
         private final String field;
         private int columnIndex;
 
-        public PrimitiveFactory(Class<T> objectClass, int columnIndex) {
+        public PrimitiveFactory(JdbcValue jdbcValue, Class<T> objectClass, int columnIndex) {
+            this.jdbcValue = jdbcValue;
             this.objectClass = objectClass;
             this.field = null;
             this.columnIndex = columnIndex;
         }
 
-        public PrimitiveFactory(Class<T> objectClass, String field) {
+        public PrimitiveFactory(JdbcValue jdbcValue, Class<T> objectClass, String field) {
+            this.jdbcValue = jdbcValue;
             this.objectClass = objectClass;
             this.field = field;
             this.columnIndex = 1;
@@ -184,11 +251,13 @@ public class JdbcResult {
     }
 
     public static class ClassFactory<T> implements Factory<T> {
+        private final JdbcValue jdbcValue;
         private final Class<T> objectClass;
         private final Set<String> fields;
         private List<ColumnInfo> columns;
 
-        public ClassFactory(Class<T> objectClass, Collection<String> fields) {
+        public ClassFactory(JdbcValue jdbcValue, Class<T> objectClass, Collection<String> fields) {
+            this.jdbcValue = jdbcValue;
             this.objectClass = objectClass;
             this.fields = fields == null ? null : new HashSet<String>(fields);
         }
@@ -264,7 +333,12 @@ public class JdbcResult {
     }
 
     public static class MapFactory implements Factory<Map<String, Object>> {
+        private final JdbcValue jdbcValue;
         private List<ColumnInfo> columns;
+
+        public MapFactory(JdbcValue jdbcValue) {
+            this.jdbcValue = jdbcValue;
+        }
 
         public void init(ResultSet result) throws SQLException, JdbcResultException {
             columns = new ArrayList<ColumnInfo>();
@@ -357,10 +431,12 @@ public class JdbcResult {
     }
 
     public static class ListFactory<T> extends CollectionFactory<List<T>> {
+        private final JdbcValue jdbcValue;
         private final Class<T> objectClass;
 
-        public ListFactory(Class<T> objectClass, Collection<String> fields) {
+        public ListFactory(JdbcValue jdbcValue, Class<T> objectClass, Collection<String> fields) {
             super(fields);
+            this.jdbcValue = jdbcValue;
             this.objectClass = objectClass;
         }
 
@@ -384,10 +460,12 @@ public class JdbcResult {
     }
 
     public static class ArrayFactory<T> extends CollectionFactory<T[]> {
+        private final JdbcValue jdbcValue;
         private final Class<T> objectClass;
 
-        public ArrayFactory(Class<T> objectClass, Collection<String> fields) {
+        public ArrayFactory(JdbcValue jdbcValue, Class<T> objectClass, Collection<String> fields) {
             super(fields);
+            this.jdbcValue = jdbcValue;
             this.objectClass = objectClass;
         }
 
