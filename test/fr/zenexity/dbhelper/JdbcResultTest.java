@@ -139,7 +139,7 @@ public class JdbcResultTest extends TestingDatabase {
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
             assertEquals("num[3]", e.getCause().getMessage());
-            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals(JdbcAdapterException.class, e.getCause().getCause().getClass());
             assertEquals("5.0 (java.lang.Double) to java.lang.Float", e.getCause().getCause().getMessage());
             assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }
@@ -292,7 +292,7 @@ public class JdbcResultTest extends TestingDatabase {
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
             assertEquals("num[1]", e.getCause().getMessage());
-            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals(JdbcAdapterException.class, e.getCause().getCause().getClass());
             assertEquals("5.0 (java.lang.Double) to java.lang.Float", e.getCause().getCause().getMessage());
             assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }
@@ -325,7 +325,7 @@ public class JdbcResultTest extends TestingDatabase {
         ResultSet rs = st.executeQuery();
         JdbcResult.Factory<Entry> factory = JdbcResult.classFactory(Entry.class, "distName", "yop");
         try {
-            factory.init(rs);
+            factory.init(jdbc.adapter, rs);
             fail("JdbcException expected");
         } catch (JdbcResultException e) {
             Throwable cause = e.getCause();
@@ -344,7 +344,7 @@ public class JdbcResultTest extends TestingDatabase {
         ResultSet rs = st.executeQuery();
         JdbcResult.Factory<EntryWithTransient> factory = JdbcResult.classFactory(EntryWithTransient.class);
         try {
-            factory.init(rs);
+            factory.init(jdbc.adapter, rs);
             fail("JdbcException expected");
         } catch (JdbcResultException e) {
             Throwable cause = e.getCause();
@@ -542,7 +542,7 @@ public class JdbcResultTest extends TestingDatabase {
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
             assertEquals("List[1]", e.getCause().getMessage());
-            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals(JdbcAdapterException.class, e.getCause().getCause().getClass());
             assertEquals("5.0 (java.lang.Double) to java.lang.String", e.getCause().getCause().getMessage());
             assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }
@@ -656,7 +656,7 @@ public class JdbcResultTest extends TestingDatabase {
         } catch (JdbcIteratorException e) {
             assertEquals(JdbcResultException.class, e.getCause().getClass());
             assertEquals("Array[1]", e.getCause().getMessage());
-            assertEquals(JdbcValueException.class, e.getCause().getCause().getClass());
+            assertEquals(JdbcAdapterException.class, e.getCause().getCause().getClass());
             assertEquals("5.0 (java.lang.Double) to java.lang.String", e.getCause().getCause().getMessage());
             assertEquals(ClassCastException.class, e.getCause().getCause().getCause().getClass());
         }

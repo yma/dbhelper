@@ -24,7 +24,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     /**
      * if statement is not null then it will be closed with the ResultSet
      */
-    public JdbcIterator(Statement statement, ResultSet result, JdbcResult.Factory<T> resultFactory) throws JdbcIteratorException {
+    public JdbcIterator(Statement statement, ResultSet result, JdbcAdapter adapter, JdbcResult.Factory<T> resultFactory) throws JdbcIteratorException {
         this.factory = resultFactory;
         this.statement = statement;
         this.result = result;
@@ -35,7 +35,7 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
 
         if (this.result != null) {
             try {
-                this.factory.init(this.result);
+                this.factory.init(adapter, this.result);
             } catch (SQLException e) {
                 throw new JdbcIteratorException(e);
             } catch (JdbcResultException e) {
@@ -170,8 +170,8 @@ public class JdbcIterator<T> implements Iterator<T>, Iterable<T> {
     }
 
     public static class Window<T> extends JdbcIterator<T> {
-        public Window(Statement statement, ResultSet result, int offset, int size, JdbcResult.Factory<T> resultFactory) throws JdbcIteratorException {
-            super(statement, result, resultFactory);
+        public Window(Statement statement, ResultSet result, int offset, int size, JdbcAdapter adapter, JdbcResult.Factory<T> resultFactory) throws JdbcIteratorException {
+            super(statement, result, adapter, resultFactory);
 
             if (offset < 0) {
                 size += offset;

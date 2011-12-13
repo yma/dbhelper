@@ -9,51 +9,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 
-public class JdbcValue {
+public class JdbcAdapter {
 
     public interface Priority {
         int priority();
     }
 
-    public interface Adapter extends Priority {
+    public interface Caster extends Priority {
         <T> T cast(Class<T> clazz, Object value) throws Exception;
     }
 
     public interface Normalizer extends Priority {
-        Object convert(Object value) throws Exception;
-    }
-
-
-    private final List<Adapter> adapters = new ArrayList<Adapter>();
-    private final List<Normalizer> valueFromSqlNormalizers = new ArrayList<Normalizer>();
-    private final List<Normalizer> valueForSqlNormalizers = new ArrayList<Normalizer>();
-
-
-    static final JdbcValue defaultAdapters = JdbcValue.createDefaultAdapters();
-
-    public static JdbcValue createDefaultAdapters() {
-        JdbcValue jdbcValue = new JdbcValue();
-        jdbcValue.register(new StandardAdapter());
-        jdbcValue.registerValueFromSqlNormalizer(new StandardValueFromSqlNormalizer());
-        return jdbcValue;
-    }
-
-
-    public void register(Adapter adapter) {
-        adapters.add(adapter);
-        Collections.sort(adapters, priorityComparator());
-    }
-
-    public void registerValueFromSqlNormalizer(Normalizer normalizer) {
-        valueFromSqlNormalizers.add(normalizer);
-        Collections.sort(valueFromSqlNormalizers, priorityComparator());
-    }
-
-    public void registerValueForSqlNormalizer(Normalizer normalizer) {
-        valueForSqlNormalizers.add(normalizer);
-        Collections.sort(valueForSqlNormalizers, priorityComparator());
+        Object normalize(Object value) throws Exception;
     }
 
     public static <T extends Priority> Comparator<T> priorityComparator() {
@@ -65,41 +35,88 @@ public class JdbcValue {
     }
 
 
-    public <T> T cast(Class<T> clazz, Object value) throws JdbcValueException {
+    public static class Builder {
+        private final List<Caster> casters = new LinkedList<Caster>();
+        private final List<Normalizer> valueFromSqlNormalizers = new LinkedList<Normalizer>();
+        private final List<Normalizer> valueForSqlNormalizers = new LinkedList<Normalizer>();
+
+        public Builder register(Caster caster) {
+            casters.add(caster);
+            Collections.sort(casters, priorityComparator());
+            return this;
+        }
+
+        public Builder registerValueFromSqlNormalizer(Normalizer normalizer) {
+            valueFromSqlNormalizers.add(normalizer);
+            Collections.sort(valueFromSqlNormalizers, priorityComparator());
+            return this;
+        }
+
+        public Builder registerValueForSqlNormalizer(Normalizer normalizer) {
+            valueForSqlNormalizers.add(normalizer);
+            Collections.sort(valueForSqlNormalizers, priorityComparator());
+            return this;
+        }
+
+        public JdbcAdapter create() {
+            return new JdbcAdapter(casters, valueFromSqlNormalizers, valueForSqlNormalizers);
+        }
+    }
+
+    public static final JdbcAdapter defaultAdapter = defaultBuilder().create();
+
+    public static Builder defaultBuilder() {
+        return new Builder()
+            .register(new StandardCaster())
+            .registerValueFromSqlNormalizer(new StandardValueFromSqlNormalizer());
+    }
+
+
+    private final List<Caster> casters;
+    private final List<Normalizer> valueFromSqlNormalizers;
+    private final List<Normalizer> valueForSqlNormalizers;
+
+    private JdbcAdapter(Collection<Caster> casters, Collection<Normalizer> valueFromSqlNormalizers, Collection<Normalizer> valueForSqlNormalizers) {
+        this.casters = new ArrayList<Caster>(casters);
+        this.valueFromSqlNormalizers = new ArrayList<Normalizer>(valueFromSqlNormalizers);
+        this.valueForSqlNormalizers = new ArrayList<Normalizer>(valueForSqlNormalizers);
+    }
+
+    public <T> T cast(Class<T> clazz, Object value) throws JdbcAdapterException {
         try {
-            for (Adapter valueAdapter : adapters) {
-                T result = valueAdapter.cast(clazz, value);
+            for (Caster caster : casters) {
+                T result = caster.cast(clazz, value);
                 if (result != null) return result;
             }
             return clazz.cast(value);
         } catch (Exception e) {
             String valueClass = value == null ? null : value.getClass().getName();
-            throw new JdbcValueException(value +" ("+ valueClass +") to "+ clazz.getName(), e);
+            throw new JdbcAdapterException(value +" ("+ valueClass +") to "+ clazz.getName(), e);
         }
     }
 
-    public static Object normalize(Collection<Normalizer> normalizers, Object value) throws JdbcValueException {
+    public static Object normalize(Collection<Normalizer> normalizers, Object value) throws JdbcAdapterException {
         try {
             for (Normalizer normalizer : normalizers) {
-                Object result = normalizer.convert(value);
+                Object result = normalizer.normalize(value);
                 if (result != null) return result;
             }
             return value;
         } catch (Exception e) {
             String valueClass = value == null ? null : value.getClass().getName();
-            throw new JdbcValueException("normalize "+ value +" ("+ valueClass +")", e);
+            throw new JdbcAdapterException("normalize "+ value +" ("+ valueClass +")", e);
         }
     }
 
-    public Object normalizeValueFromSql(Object value) throws JdbcValueException {
+    public Object normalizeValueFromSql(Object value) throws JdbcAdapterException {
         return normalize(valueFromSqlNormalizers, value);
     }
 
-    public Object normalizeValueForSql(Object value) throws JdbcValueException {
+    public Object normalizeValueForSql(Object value) throws JdbcAdapterException {
         return normalize(valueForSqlNormalizers, value);
     }
 
-    public static class StandardAdapter implements Adapter {
+    public static class StandardCaster implements Caster {
         public int priority() { return 1000; }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -130,14 +147,14 @@ public class JdbcValue {
     public static class StandardValueFromSqlNormalizer implements Normalizer {
         public int priority() { return 1000; }
 
-        public Object convert(Object value) throws Exception {
+        public Object normalize(Object value) throws Exception {
             if (value instanceof BigDecimal) return new Long(((BigDecimal)value).longValue());
             if (value instanceof Clob) return clobToString((Clob) value);
             return value;
         }
     }
 
-    public static class NumberConverter implements Adapter {
+    public static class NumberConverter implements Caster {
         public int priority() { return 900; }
 
         @SuppressWarnings("unchecked")
