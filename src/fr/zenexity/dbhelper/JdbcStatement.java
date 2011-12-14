@@ -4,24 +4,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 public class JdbcStatement {
 
-    public final PreparedStatement statement;
-    public final JdbcAdapter adapter;
-    private int index;
-
-    public static PreparedStatement prepare(Connection cnx, String sql) throws JdbcStatementException {
-        try {
-            return cnx.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        } catch (SQLException e) {
-            throw new JdbcStatementException(e);
-        }
-    }
+    public static final int defaultResultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
+    public static final int defaultResultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
 
     public static int executeUpdate(Connection cnx, JdbcAdapter adapter, String query, Object... params) throws JdbcStatementException {
-        JdbcStatement qs = new JdbcStatement(cnx, adapter, query, params);
+        JdbcStatement qs = prepareUpdate(cnx, adapter, query).params(params);
         final int result;
         try {
             result = qs.executeUpdate();
@@ -35,6 +27,94 @@ public class JdbcStatement {
         return executeUpdate(cnx, JdbcAdapter.defaultAdapter, query, params);
     }
 
+
+    public static PreparedStatement prepareQuery(Connection cnx, String sql, int resultSetType, int resultSetConcurrency) throws JdbcStatementException {
+        try {
+            return cnx.prepareStatement(sql, resultSetType, resultSetConcurrency);
+        } catch (SQLException e) {
+            throw new JdbcStatementException(e);
+        }
+    }
+
+    public static PreparedStatement prepareQuery(Connection cnx, String sql) throws JdbcStatementException {
+        return prepareQuery(cnx, sql, defaultResultSetType, defaultResultSetConcurrency);
+    }
+
+    public static PreparedStatement prepareUpdate(Connection cnx, String sql) throws JdbcStatementException {
+        try {
+            return cnx.prepareStatement(sql);
+        } catch (SQLException e) {
+            throw new JdbcStatementException(e);
+        }
+    }
+
+    public static PreparedStatement prepareUpdate(Connection cnx, String sql, boolean returnGeneratedKeys) throws JdbcStatementException {
+        try {
+            return cnx.prepareStatement(sql,
+                    returnGeneratedKeys ?
+                            Statement.RETURN_GENERATED_KEYS :
+                            Statement.NO_GENERATED_KEYS);
+        } catch (SQLException e) {
+            throw new JdbcStatementException(e);
+        }
+    }
+
+
+    public static JdbcStatement prepareQuery(Connection cnx, JdbcAdapter adapter, String query) throws JdbcStatementException {
+        return new JdbcStatement(prepareQuery(cnx, query), adapter);
+    }
+
+    public static JdbcStatement prepareQuery(Connection cnx, JdbcAdapter adapter, String query, int resultSetType, int resultSetConcurrency) throws JdbcStatementException {
+        return new JdbcStatement(prepareQuery(cnx, query, resultSetType, resultSetConcurrency), adapter);
+    }
+
+    public static JdbcStatement prepareUpdate(Connection cnx, JdbcAdapter adapter, String query) throws JdbcStatementException {
+        return new JdbcStatement(prepareUpdate(cnx, query), adapter);
+    }
+
+    public static JdbcStatement prepareUpdate(Connection cnx, JdbcAdapter adapter, String query, boolean returnGeneratedKeys) throws JdbcStatementException {
+        return new JdbcStatement(prepareUpdate(cnx, query, returnGeneratedKeys), adapter);
+    }
+
+
+    public static JdbcStatement prepareQuery(Jdbc jdbc, String query) throws JdbcStatementException {
+        return prepareQuery(jdbc.connection, jdbc.adapter, query);
+    }
+
+    public static JdbcStatement prepareQuery(Jdbc jdbc, String query, int resultSetType, int resultSetConcurrency) throws JdbcStatementException {
+        return prepareQuery(jdbc.connection, jdbc.adapter, query, resultSetType, resultSetConcurrency);
+    }
+
+    public static JdbcStatement prepareUpdate(Jdbc jdbc, String query) throws JdbcStatementException {
+        return prepareUpdate(jdbc.connection, jdbc.adapter, query);
+    }
+
+    public static JdbcStatement prepareUpdate(Jdbc jdbc, String query, boolean returnGeneratedKeys) throws JdbcStatementException {
+        return prepareUpdate(jdbc.connection, jdbc.adapter, query, returnGeneratedKeys);
+    }
+
+
+    public static JdbcStatement prepare(Connection cnx, JdbcAdapter adapter, Sql.Query query) throws JdbcStatementException {
+        return prepareQuery(cnx, adapter, query.toString()).paramsList(query.params());
+    }
+
+    public static JdbcStatement prepare(Connection cnx, JdbcAdapter adapter, Sql.Query query, int resultSetType, int resultSetConcurrency) throws JdbcStatementException {
+        return prepareQuery(cnx, adapter, query.toString(), resultSetType, resultSetConcurrency).paramsList(query.params());
+    }
+
+    public static JdbcStatement prepare(Connection cnx, JdbcAdapter adapter, Sql.UpdateQuery query) throws JdbcStatementException {
+        return prepareUpdate(cnx, adapter, query.toString()).paramsList(query.params());
+    }
+
+    public static JdbcStatement prepare(Connection cnx, JdbcAdapter adapter, Sql.UpdateQuery query, boolean returnGeneratedKeys) throws JdbcStatementException {
+        return prepareUpdate(cnx, adapter, query.toString(), returnGeneratedKeys).paramsList(query.params());
+    }
+
+
+    public final PreparedStatement statement;
+    public final JdbcAdapter adapter;
+    private int index;
+
     public JdbcStatement(PreparedStatement statement, JdbcAdapter adapter) {
         this(statement, 0, adapter);
     }
@@ -43,36 +123,6 @@ public class JdbcStatement {
         this.statement = statement;
         this.index = index;
         this.adapter = adapter;
-    }
-
-    public JdbcStatement(PreparedStatement statement, JdbcAdapter adapter, Object... params) throws JdbcStatementException {
-        this(statement, adapter);
-        params(params);
-    }
-
-    public JdbcStatement(PreparedStatement statement, JdbcAdapter adapter, Iterable<Object> params) throws JdbcStatementException {
-        this(statement, adapter);
-        paramsList(params);
-    }
-
-    public JdbcStatement(Connection cnx, JdbcAdapter adapter, String query) throws JdbcStatementException {
-        this(prepare(cnx, query), adapter);
-    }
-
-    public JdbcStatement(Connection cnx, JdbcAdapter adapter, String query, Object... params) throws JdbcStatementException {
-        this(prepare(cnx, query), adapter, params);
-    }
-
-    public JdbcStatement(Connection cnx, JdbcAdapter adapter, String query, Iterable<Object> params) throws JdbcStatementException {
-        this(prepare(cnx, query), adapter, params);
-    }
-
-    public JdbcStatement(Connection cnx, JdbcAdapter adapter, Sql.Query query) throws JdbcStatementException {
-        this(cnx, adapter, query.toString(), query.params());
-    }
-
-    public JdbcStatement(Connection cnx, JdbcAdapter adapter, Sql.UpdateQuery query) throws JdbcStatementException {
-        this(cnx, adapter, query.toString(), query.params());
     }
 
     public void reset() throws JdbcStatementException {
@@ -84,22 +134,24 @@ public class JdbcStatement {
         index = 0;
     }
 
-    public void params(Object... params) throws JdbcStatementException {
+    public JdbcStatement params(Object... params) throws JdbcStatementException {
         try {
             for (Object param : params)
                 statement.setObject(++index, adapter.normalizeValueForSql(param));
         } catch (SQLException e) {
             throw new JdbcStatementException(e);
         }
+        return this;
     }
 
-    public void paramsList(Iterable<Object> params) throws JdbcStatementException {
+    public JdbcStatement paramsList(Iterable<Object> params) throws JdbcStatementException {
         try {
             for (Object param : params)
                 statement.setObject(++index, adapter.normalizeValueForSql(param));
         } catch (SQLException e) {
             throw new JdbcStatementException(e);
         }
+        return this;
     }
 
     public ResultSet executeQuery() throws JdbcStatementException {
@@ -154,6 +206,22 @@ public class JdbcStatement {
         reset();
         params(params);
         return executeUpdate();
+    }
+
+    public ResultSet getGeneratedKeys() throws JdbcStatementException {
+        try {
+            return statement.getGeneratedKeys();
+        } catch (SQLException e) {
+            throw new JdbcStatementException(e);
+        }
+    }
+
+    public <T> JdbcIterator<T> getGeneratedKeys(JdbcResult.Factory<T> resultFactory) throws JdbcException {
+        return new JdbcIterator<T>(null, getGeneratedKeys(), adapter, resultFactory);
+    }
+
+    public <T> JdbcIterator<T> getGeneratedKeys(Class<T> resultClass) throws JdbcException {
+        return getGeneratedKeys(JdbcResult.buildFactory(resultClass));
     }
 
     public void close() throws JdbcStatementException {

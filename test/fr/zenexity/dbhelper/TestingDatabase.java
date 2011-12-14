@@ -53,7 +53,7 @@ public class TestingDatabase {
 
         jdbc.executeUpdate("DROP TABLE IF EXISTS Entry");
         jdbc.executeUpdate("CREATE TABLE Entry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT)");
-        JdbcStatement insertEntry = jdbc.newStatement("INSERT INTO Entry (distName, version, num, typeName, typeOrdinal) VALUES (?, ?, ?, ?, ?)");
+        JdbcStatement insertEntry = JdbcStatement.prepareUpdate(jdbc, "INSERT INTO Entry (distName, version, num, typeName, typeOrdinal) VALUES (?, ?, ?, ?, ?)");
         try {
             insertEntry.executeUpdate("Debian", "5.0", 5, Entry.DistType.DEBIAN.name(), Entry.DistType.DEBIAN.ordinal());
             insertEntry.executeUpdate("Ubuntu", "9.10", 9.10, Entry.DistType.UBUNTU.name(), Entry.DistType.UBUNTU.ordinal());
@@ -66,7 +66,7 @@ public class TestingDatabase {
 
         jdbc.executeUpdate("DROP TABLE IF EXISTS ExEntry");
         jdbc.executeUpdate("CREATE TABLE ExEntry (distName VARCHAR(255) DEFAULT NULL, version VARCHAR(255), num FLOAT, typeName VARCHAR(255), typeOrdinal INT, fullName VARCHAR(255))");
-        JdbcStatement insertExEntry = jdbc.newStatement("INSERT INTO ExEntry (distName, version, num, typeName, typeOrdinal, fullName) VALUES (?, ?, ?, ?, ?, ?)");
+        JdbcStatement insertExEntry = JdbcStatement.prepareUpdate(jdbc, "INSERT INTO ExEntry (distName, version, num, typeName, typeOrdinal, fullName) VALUES (?, ?, ?, ?, ?, ?)");
         try {
             insertExEntry.executeUpdate("Debian", "5.0", 5, Entry.DistType.DEBIAN.name(), Entry.DistType.DEBIAN.ordinal(), "Debian 5.0");
             insertExEntry.executeUpdate("Ubuntu", "9.10", 9.10, Entry.DistType.UBUNTU.name(), Entry.DistType.UBUNTU.ordinal(), "Ubuntu 9.10");
@@ -79,7 +79,7 @@ public class TestingDatabase {
 
         jdbc.executeUpdate("DROP TABLE IF EXISTS EntryClob");
         jdbc.executeUpdate("CREATE TABLE EntryClob (textClob "+ longText +")");
-        JdbcStatement insertEntryClob = jdbc.newStatement("INSERT INTO EntryClob (textClob) VALUES (?)");
+        JdbcStatement insertEntryClob = JdbcStatement.prepareUpdate(jdbc, "INSERT INTO EntryClob (textClob) VALUES (?)");
         try {
             insertEntryClob.executeUpdate("Debian 5.0");
             insertEntryClob.executeUpdate("Ubuntu 9.10");

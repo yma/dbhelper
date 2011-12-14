@@ -1,7 +1,6 @@
 package fr.zenexity.dbhelper;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -12,6 +11,9 @@ public class Jdbc {
     public final Connection connection;
     public final JdbcAdapter adapter;
 
+    private int defaultResultSetType = JdbcStatement.defaultResultSetType;
+    private int defaultResultSetConcurrency = JdbcStatement.defaultResultSetConcurrency;
+
     public Jdbc(Connection connection, JdbcAdapter adapter) {
         this.connection = connection;
         this.adapter = adapter;
@@ -19,6 +21,24 @@ public class Jdbc {
 
     public Jdbc(Connection connection) {
         this(connection, JdbcAdapter.defaultAdapter);
+    }
+
+    public int defaultResultSetType() {
+        return defaultResultSetType;
+    }
+
+    public Jdbc defaultResultSetType(int resultSetType) {
+        defaultResultSetType = resultSetType;
+        return this;
+    }
+
+    public int defaultResultSetConcurrency() {
+        return defaultResultSetConcurrency;
+    }
+
+    public Jdbc defaultResultSetConcurrency(int resultSetConcurrency) {
+        defaultResultSetConcurrency = resultSetConcurrency;
+        return this;
     }
 
     public void close() throws JdbcException {
@@ -30,28 +50,20 @@ public class Jdbc {
     }
 
 
-    public JdbcStatement newStatement(String query, Object... params) throws JdbcStatementException {
-        return new JdbcStatement(connection, adapter, query, params);
-    }
-
-    public JdbcStatement newStatement(String query, Iterable<Object> params) throws JdbcStatementException {
-        return new JdbcStatement(connection, adapter, query, params);
-    }
-
     public JdbcStatement newStatement(Sql.Query query) throws JdbcStatementException {
-        return new JdbcStatement(connection, adapter, query);
+        return JdbcStatement.prepare(connection, adapter, query, defaultResultSetType, defaultResultSetConcurrency);
+    }
+
+    public JdbcStatement newStatement(Sql.Query query, int resultSetType, int resultSetConcurrency) throws JdbcStatementException {
+        return JdbcStatement.prepare(connection, adapter, query, resultSetType, resultSetConcurrency);
     }
 
     public JdbcStatement newStatement(Sql.UpdateQuery query) throws JdbcStatementException {
-        return new JdbcStatement(connection, adapter, query);
+        return JdbcStatement.prepare(connection, adapter, query);
     }
 
-    public JdbcStatement newStatement(PreparedStatement statement, Object... params) throws JdbcStatementException {
-        return new JdbcStatement(statement, adapter, params);
-    }
-
-    public JdbcStatement newStatement(PreparedStatement statement, Iterable<Object> params) throws JdbcStatementException {
-        return new JdbcStatement(statement, adapter, params);
+    public JdbcStatement newStatement(Sql.UpdateQuery query, boolean returnGeneratedKeys) throws JdbcStatementException {
+        return JdbcStatement.prepare(connection, adapter, query, returnGeneratedKeys);
     }
 
 
