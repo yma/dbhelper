@@ -235,6 +235,16 @@ public class SqlSelectTest {
     }
 
     @Test
+    public void limitMysql() {
+        assertEquals("LIMIT 1, 2", Sql.select().limit(1, 2).toString());
+    }
+
+    @Test(expected=NullPointerException.class)
+    public void limitMysqlError() {
+        Sql.select().limit(1, 2).limit(3, 4).toString();
+    }
+
+    @Test
     public void params() {
         SqlTest.assertQuery(Sql.select()
                     .andWhere("f", 6, "f")
@@ -278,7 +288,7 @@ public class SqlSelectTest {
         assertEquals(
             "SELECT DISTINCT a, b, c FROM t1, t2 INNER JOIN ij1 INNER JOIN ij2 LEFT JOIN lj1 LEFT JOIN lj2" +
             " WHERE w1 AND w2 OR w3 GROUP BY g1, g2" +
-            " HAVING h1 OR h2 AND h3 ORDER BY o1, o2 OFFSET 12 LIMIT 123",
+            " HAVING h1 OR h2 AND h3 ORDER BY o1, o2 OFFSET 12 LIMIT 123, 456",
             new Sql.Select(Sql
                 .selectDistinct("a", "b", "c")
                 .from("t1", "t2")
@@ -293,7 +303,7 @@ public class SqlSelectTest {
                 .andHaving("h3")
                 .orderBy("o1", "o2")
                 .offset(12)
-                .limit(123))
+                .limit(123, 456))
                 .toString());
     }
 

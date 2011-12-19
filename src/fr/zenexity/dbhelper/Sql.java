@@ -412,6 +412,7 @@ public abstract class Sql {
 
         public Select offset(long start) { offset.append(start); return this; }
         public Select limit(long count) { limit.append(count); return this; }
+        public Select limit(long offset, long count) { limit.append(offset +", "+ count); return this; }
 
         @Override
         public String toString() {
