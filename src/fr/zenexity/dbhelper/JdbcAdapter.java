@@ -5,10 +5,12 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Clob;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -153,6 +155,15 @@ public class JdbcAdapter {
         public Object normalize(Object value) throws Exception {
             if (value instanceof BigDecimal) return new Long(((BigDecimal)value).longValue());
             if (value instanceof Clob) return clobToString((Clob) value);
+            return null;
+        }
+    }
+
+    public static class Date2SqlTimestampEncoder implements SqlEncoder {
+        public int priority() { return 1000; }
+
+        public Object normalize(Object value) throws Exception {
+            if (value instanceof Date) return new Timestamp(((Date)value).getTime());
             return null;
         }
     }

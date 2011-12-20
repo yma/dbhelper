@@ -33,6 +33,16 @@ public class JdbcAdapterTest extends TestingDatabase {
     }
 
     @Test
+    public void testDate2SqlTimestampEncoder() {
+        Date date = new Date();
+        assertEquals(date, adapter.encodeSqlValue(date));
+        adapter = JdbcAdapter.defaultBuilder()
+                .register(new JdbcAdapter.Date2SqlTimestampEncoder())
+                .create();
+        assertEquals(new Timestamp(date.getTime()), adapter.encodeSqlValue(date));
+    }
+
+    @Test
     public void testCastValue() {
         assertEquals(new Integer(213), adapter.cast(Integer.class, new Integer(213)));
         assertEquals(new BigDecimal(213), adapter.cast(Number.class, new BigDecimal(213)));
