@@ -137,7 +137,7 @@ public class JdbcStatement {
     public JdbcStatement params(Object... params) throws JdbcStatementException {
         try {
             for (Object param : params)
-                statement.setObject(++index, adapter.normalizeValueForSql(param));
+                statement.setObject(++index, adapter.encodeSqlValue(param));
         } catch (SQLException e) {
             throw new JdbcStatementException(e);
         }
@@ -147,7 +147,7 @@ public class JdbcStatement {
     public JdbcStatement paramsList(Iterable<Object> params) throws JdbcStatementException {
         try {
             for (Object param : params)
-                statement.setObject(++index, adapter.normalizeValueForSql(param));
+                statement.setObject(++index, adapter.encodeSqlValue(param));
         } catch (SQLException e) {
             throw new JdbcStatementException(e);
         }

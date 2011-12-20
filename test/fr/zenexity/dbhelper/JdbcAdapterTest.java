@@ -19,37 +19,23 @@ public class JdbcAdapterTest extends TestingDatabase {
     }
 
     @Test
-    public void testNormalizeValueFromSql() {
-        assertEquals(new Integer(213), adapter.normalizeValueFromSql(new Integer(213)));
-        assertEquals(new Long(213), adapter.normalizeValueFromSql(new Long(213)));
-        assertEquals(new Long(213), adapter.normalizeValueFromSql(new BigDecimal(213)));
+    public void testDecodeSqlValue() {
+        assertEquals(new Integer(213), adapter.decodeSqlValue(new Integer(213)));
+        assertEquals(new Long(213), adapter.decodeSqlValue(new Long(213)));
+        assertEquals(new Long(213), adapter.decodeSqlValue(new BigDecimal(213)));
     }
 
     @Test
-    public void testNormalizeValueForSql() {
-        assertEquals(new Integer(213), adapter.normalizeValueForSql(new Integer(213)));
-        assertEquals(new Long(213), adapter.normalizeValueForSql(new Long(213)));
-        assertEquals(new BigDecimal(213), adapter.normalizeValueForSql(new BigDecimal(213)));
+    public void testEncodeSqlValue() {
+        assertEquals(new Integer(213), adapter.encodeSqlValue(new Integer(213)));
+        assertEquals(new Long(213), adapter.encodeSqlValue(new Long(213)));
+        assertEquals(new BigDecimal(213), adapter.encodeSqlValue(new BigDecimal(213)));
     }
 
     @Test
     public void testCastValue() {
         assertEquals(new Integer(213), adapter.cast(Integer.class, new Integer(213)));
         assertEquals(new BigDecimal(213), adapter.cast(Number.class, new BigDecimal(213)));
-    }
-
-    @Test
-    public void testNumberConverter() {
-        adapter = JdbcAdapter.defaultBuilder()
-                .register(new JdbcAdapter.NumberConverter())
-                .create();
-        assertEquals(new Integer(123), adapter.cast(Integer.class, new Byte((byte)123)));
-        assertEquals(new Integer(213), adapter.cast(Integer.class, new Integer(213)));
-        assertEquals(new Byte((byte)123), adapter.cast(Byte.class, new Integer(123)));
-        assertEquals(new Byte((byte)123), adapter.cast(Byte.class, new BigDecimal(123)));
-        assertEquals(new Short((short)213), adapter.cast(Short.class, new BigDecimal(213)));
-        assertEquals(new Integer(213), adapter.cast(Integer.class, new BigDecimal(213)));
-        assertEquals(new Long(213), adapter.cast(Long.class, new BigDecimal(213)));
     }
 
     @Test
@@ -63,6 +49,27 @@ public class JdbcAdapterTest extends TestingDatabase {
     public void testDateCastDateValue() {
         Date date = new Date();
         assertEquals(date, adapter.cast(Date.class, new Timestamp(date.getTime())));
+    }
+
+    @Test
+    public void testNumberConverter() {
+        try {
+            assertEquals(new Integer(123), adapter.cast(Integer.class, new Byte((byte)123)));
+            fail("JdbcAdapterException excepted");
+        } catch (JdbcAdapterException e) {
+            assertEquals(ClassCastException.class, e.getCause().getClass());
+            assertEquals("123 (java.lang.Byte) to java.lang.Integer", e.getMessage());
+        }
+        adapter = JdbcAdapter.defaultBuilder()
+                .register(new JdbcAdapter.NumberConverter())
+                .create();
+        assertEquals(new Integer(123), adapter.cast(Integer.class, new Byte((byte)123)));
+        assertEquals(new Integer(213), adapter.cast(Integer.class, new Integer(213)));
+        assertEquals(new Byte((byte)123), adapter.cast(Byte.class, new Integer(123)));
+        assertEquals(new Byte((byte)123), adapter.cast(Byte.class, new BigDecimal(123)));
+        assertEquals(new Short((short)213), adapter.cast(Short.class, new BigDecimal(213)));
+        assertEquals(new Integer(213), adapter.cast(Integer.class, new BigDecimal(213)));
+        assertEquals(new Long(213), adapter.cast(Long.class, new BigDecimal(213)));
     }
 
 }

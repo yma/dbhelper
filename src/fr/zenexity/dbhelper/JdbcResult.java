@@ -280,7 +280,7 @@ public class JdbcResult {
             try {
                 for (ColumnInfo column : columns) {
                     Object value = result.getObject(column.index);
-                    map.put(column.name, adapter.normalizeValueFromSql(value));
+                    map.put(column.name, adapter.decodeSqlValue(value));
                 }
             } catch (SQLException e) {
                 throw e;

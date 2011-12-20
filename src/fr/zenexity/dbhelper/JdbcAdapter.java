@@ -26,6 +26,9 @@ public class JdbcAdapter {
         Object normalize(Object value) throws Exception;
     }
 
+    public interface SqlEncoder extends Normalizer {}
+    public interface SqlDecoder extends Normalizer {}
+
     public static <T extends Priority> Comparator<T> priorityComparator() {
         return new Comparator<T>() {
             public int compare(T o1, T o2) {
@@ -37,8 +40,8 @@ public class JdbcAdapter {
 
     public static class Builder {
         private final List<Caster> casters = new LinkedList<Caster>();
-        private final List<Normalizer> valueFromSqlNormalizers = new LinkedList<Normalizer>();
-        private final List<Normalizer> valueForSqlNormalizers = new LinkedList<Normalizer>();
+        private final List<SqlDecoder> decoders = new LinkedList<SqlDecoder>();
+        private final List<SqlEncoder> encoders = new LinkedList<SqlEncoder>();
 
         public Builder register(Caster caster) {
             casters.add(caster);
@@ -46,20 +49,20 @@ public class JdbcAdapter {
             return this;
         }
 
-        public Builder registerValueFromSqlNormalizer(Normalizer normalizer) {
-            valueFromSqlNormalizers.add(normalizer);
-            Collections.sort(valueFromSqlNormalizers, priorityComparator());
+        public Builder register(SqlDecoder normalizer) {
+            decoders.add(normalizer);
+            Collections.sort(decoders, priorityComparator());
             return this;
         }
 
-        public Builder registerValueForSqlNormalizer(Normalizer normalizer) {
-            valueForSqlNormalizers.add(normalizer);
-            Collections.sort(valueForSqlNormalizers, priorityComparator());
+        public Builder register(SqlEncoder normalizer) {
+            encoders.add(normalizer);
+            Collections.sort(encoders, priorityComparator());
             return this;
         }
 
         public JdbcAdapter create() {
-            return new JdbcAdapter(casters, valueFromSqlNormalizers, valueForSqlNormalizers);
+            return new JdbcAdapter(casters, decoders, encoders);
         }
     }
 
@@ -68,18 +71,18 @@ public class JdbcAdapter {
     public static Builder defaultBuilder() {
         return new Builder()
             .register(new StandardCaster())
-            .registerValueFromSqlNormalizer(new StandardValueFromSqlNormalizer());
+            .register(new StandardSqlValueDecoder());
     }
 
 
     private final List<Caster> casters;
-    private final List<Normalizer> valueFromSqlNormalizers;
-    private final List<Normalizer> valueForSqlNormalizers;
+    private final List<SqlDecoder> sqlDecoders;
+    private final List<SqlEncoder> sqlEncoders;
 
-    private JdbcAdapter(Collection<Caster> casters, Collection<Normalizer> valueFromSqlNormalizers, Collection<Normalizer> valueForSqlNormalizers) {
+    private JdbcAdapter(Collection<Caster> casters, Collection<SqlDecoder> decoders, Collection<SqlEncoder> encoders) {
         this.casters = new ArrayList<Caster>(casters);
-        this.valueFromSqlNormalizers = new ArrayList<Normalizer>(valueFromSqlNormalizers);
-        this.valueForSqlNormalizers = new ArrayList<Normalizer>(valueForSqlNormalizers);
+        this.sqlDecoders = new ArrayList<SqlDecoder>(decoders);
+        this.sqlEncoders = new ArrayList<SqlEncoder>(encoders);
     }
 
     public <T> T cast(Class<T> clazz, Object value) throws JdbcAdapterException {
@@ -95,7 +98,7 @@ public class JdbcAdapter {
         }
     }
 
-    public static Object normalize(Collection<Normalizer> normalizers, Object value) throws JdbcAdapterException {
+    public static Object normalize(Collection<? extends Normalizer> normalizers, Object value) throws JdbcAdapterException {
         try {
             for (Normalizer normalizer : normalizers) {
                 Object result = normalizer.normalize(value);
@@ -108,12 +111,12 @@ public class JdbcAdapter {
         }
     }
 
-    public Object normalizeValueFromSql(Object value) throws JdbcAdapterException {
-        return normalize(valueFromSqlNormalizers, value);
+    public Object decodeSqlValue(Object value) throws JdbcAdapterException {
+        return normalize(sqlDecoders, value);
     }
 
-    public Object normalizeValueForSql(Object value) throws JdbcAdapterException {
-        return normalize(valueForSqlNormalizers, value);
+    public Object encodeSqlValue(Object value) throws JdbcAdapterException {
+        return normalize(sqlEncoders, value);
     }
 
     public static class StandardCaster implements Caster {
@@ -144,13 +147,13 @@ public class JdbcAdapter {
         }
     }
 
-    public static class StandardValueFromSqlNormalizer implements Normalizer {
+    public static class StandardSqlValueDecoder implements SqlDecoder {
         public int priority() { return 1000; }
 
         public Object normalize(Object value) throws Exception {
             if (value instanceof BigDecimal) return new Long(((BigDecimal)value).longValue());
             if (value instanceof Clob) return clobToString((Clob) value);
-            return value;
+            return null;
         }
     }
 
