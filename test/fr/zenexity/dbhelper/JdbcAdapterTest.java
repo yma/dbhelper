@@ -70,12 +70,40 @@ public class JdbcAdapterTest extends TestingDatabase {
             assertEquals(ClassCastException.class, e.getCause().getClass());
             assertEquals("123 (java.lang.Byte) to java.lang.Integer", e.getMessage());
         }
-        adapter = JdbcAdapter.defaultBuilder()
-                .register(new JdbcAdapter.NumberConverter())
+
+        adapter = new JdbcAdapter.Builder()
+                .register(new JdbcAdapter.NumberConverter(Number.class))
                 .create();
         assertEquals(new Integer(123), adapter.cast(Integer.class, new Byte((byte)123)));
         assertEquals(new Integer(213), adapter.cast(Integer.class, new Integer(213)));
         assertEquals(new Byte((byte)123), adapter.cast(Byte.class, new Integer(123)));
+        assertEquals(new Byte((byte)123), adapter.cast(Byte.class, new BigDecimal(123)));
+        assertEquals(new Short((short)213), adapter.cast(Short.class, new BigDecimal(213)));
+        assertEquals(new Integer(213), adapter.cast(Integer.class, new BigDecimal(213)));
+        assertEquals(new Long(213), adapter.cast(Long.class, new BigDecimal(213)));
+    }
+
+    @Test
+    public void testNumberConverterBigDecimalOnly() {
+        adapter = new JdbcAdapter.Builder().create();
+        try {
+            adapter.cast(Long.class, new BigDecimal(123));
+            fail("JdbcAdapterException excepted");
+        } catch (JdbcAdapterException e) {
+            assertEquals(ClassCastException.class, e.getCause().getClass());
+            assertEquals("123 (java.math.BigDecimal) to java.lang.Long", e.getMessage());
+        }
+
+        adapter = new JdbcAdapter.Builder()
+                .register(new JdbcAdapter.NumberConverter(BigDecimal.class))
+                .create();
+        try {
+            adapter.cast(Integer.class, new Byte((byte)123));
+            fail("JdbcAdapterException excepted");
+        } catch (JdbcAdapterException e) {
+            assertEquals(ClassCastException.class, e.getCause().getClass());
+            assertEquals("123 (java.lang.Byte) to java.lang.Integer", e.getMessage());
+        }
         assertEquals(new Byte((byte)123), adapter.cast(Byte.class, new BigDecimal(123)));
         assertEquals(new Short((short)213), adapter.cast(Short.class, new BigDecimal(213)));
         assertEquals(new Integer(213), adapter.cast(Integer.class, new BigDecimal(213)));

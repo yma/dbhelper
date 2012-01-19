@@ -73,7 +73,8 @@ public class JdbcAdapter {
     public static Builder defaultBuilder() {
         return new Builder()
             .register(new StandardCaster())
-            .register(new StandardSqlValueDecoder());
+            .register(new StandardSqlValueDecoder())
+            .register(new NumberConverter(BigDecimal.class));
     }
 
 
@@ -169,11 +170,17 @@ public class JdbcAdapter {
     }
 
     public static class NumberConverter implements Caster {
+        public final Class<? extends Number> fromClazz;
+
+        public NumberConverter(Class<? extends Number> _fromClazz) {
+            fromClazz = _fromClazz;
+        }
+
         public int priority() { return 900; }
 
         @SuppressWarnings("unchecked")
         public <T> T cast(Class<T> clazz, Object value) throws Exception {
-            if (Number.class.isAssignableFrom(clazz) && value instanceof Number) {
+            if (Number.class.isAssignableFrom(clazz) && fromClazz.isInstance(value)) {
                 Number numValue = (Number) value;
                 if (clazz == Byte.class) {
                     return (T) Byte.valueOf(numValue.byteValue());
