@@ -105,7 +105,7 @@ public class JdbcAdapter {
         try {
             for (Normalizer normalizer : normalizers) {
                 Object result = normalizer.normalize(value);
-                if (result != null) return result;
+                if (result != null) value = result;
             }
             return value;
         } catch (Exception e) {

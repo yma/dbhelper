@@ -11,6 +11,14 @@ import org.junit.Test;
 
 public class JdbcAdapterTest extends TestingDatabase {
 
+    public static class LongToDateSqlEncoder implements JdbcAdapter.SqlEncoder {
+        public int priority() { return 900; }
+
+        public Object normalize(Object value) throws Exception {
+            return value instanceof Long ? new Date(((Long)value)) : null;
+        }
+    }
+
     private JdbcAdapter adapter;
 
     @Before
@@ -40,6 +48,17 @@ public class JdbcAdapterTest extends TestingDatabase {
                 .register(new JdbcAdapter.Date2SqlTimestampEncoder())
                 .create();
         assertEquals(new Timestamp(date.getTime()), adapter.encodeSqlValue(date));
+    }
+
+    @Test
+    public void testEncodeSqlChaining() {
+        JdbcAdapter chainedAdapter = JdbcAdapter.defaultBuilder()
+            .register(new LongToDateSqlEncoder())
+            .register(new JdbcAdapter.Date2SqlTimestampEncoder())
+            .create();
+        assertEquals(new Integer(213), chainedAdapter.encodeSqlValue(new Integer(213)));
+        assertEquals(Timestamp.class, chainedAdapter.encodeSqlValue(new Long(1344520308000L)).getClass());
+        assertEquals(new Timestamp(1344520308000L), chainedAdapter.encodeSqlValue(new Long(1344520308000L)));
     }
 
     @Test
