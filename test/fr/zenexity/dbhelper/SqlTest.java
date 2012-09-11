@@ -124,6 +124,26 @@ public class SqlTest {
     }
 
     @Test
+    public void joinTypeValue() {
+        assertEquals("JOIN", Sql.JoinType.JOIN.value);
+        assertEquals("INNER JOIN", Sql.JoinType.INNER.value);
+        assertEquals("LEFT JOIN", Sql.JoinType.LEFT.value);
+        assertEquals("RIGHT JOIN", Sql.JoinType.RIGHT.value);
+        assertEquals("FULL JOIN", Sql.JoinType.FULL.value);
+        assertEquals("LEFT OUTER JOIN", Sql.JoinType.LEFT_OUTER.value);
+        assertEquals("RIGHT OUTER JOIN", Sql.JoinType.RIGHT_OUTER.value);
+        assertEquals("FULL OUTER JOIN", Sql.JoinType.FULL_OUTER.value);
+        assertEquals("CROSS JOIN", Sql.JoinType.CROSS.value);
+        assertEquals("NATURAL JOIN", Sql.JoinType.NATURAL.value);
+        assertEquals("NATURAL LEFT JOIN", Sql.JoinType.NATURAL_LEFT.value);
+        assertEquals("NATURAL RIGHT JOIN", Sql.JoinType.NATURAL_RIGHT.value);
+        assertEquals("NATURAL LEFT OUTER JOIN", Sql.JoinType.NATURAL_LEFT_OUTER.value);
+        assertEquals("NATURAL RIGHT OUTER JOIN", Sql.JoinType.NATURAL_RIGHT_OUTER.value);
+        assertEquals("STRAIGHT_JOIN", Sql.JoinType.STRAIGHT_JOIN.value);
+        assertEquals(15, Sql.JoinType.values().length);
+    }
+
+    @Test
     public void RepeatToString() {
         Sql.Concat c = new Sql.Concat("Hello ", " World ", ".").add("cool", "cool");
         assertEquals("Hello cool World cool.", c.toString());

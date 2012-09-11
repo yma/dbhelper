@@ -329,6 +329,27 @@ public abstract class Sql {
         }
     }
 
+    public enum JoinType {
+        JOIN("JOIN"),
+        INNER("INNER JOIN"),
+        LEFT("LEFT JOIN"),
+        RIGHT("RIGHT JOIN"),
+        FULL("FULL JOIN"),
+        LEFT_OUTER("LEFT OUTER JOIN"),
+        RIGHT_OUTER("RIGHT OUTER JOIN"),
+        FULL_OUTER("FULL OUTER JOIN"),
+        CROSS("CROSS JOIN"),
+        NATURAL("NATURAL JOIN"),
+        NATURAL_LEFT("NATURAL LEFT JOIN"),
+        NATURAL_RIGHT("NATURAL RIGHT JOIN"),
+        NATURAL_LEFT_OUTER("NATURAL LEFT OUTER JOIN"),
+        NATURAL_RIGHT_OUTER("NATURAL RIGHT OUTER JOIN"),
+        STRAIGHT_JOIN("STRAIGHT_JOIN");
+
+        public final String value;
+        private JoinType(String value) { this.value = value; }
+    }
+
     public static final class Select implements Query {
         private final Concat select;
         private final ConcatWithParams from;
@@ -383,12 +404,30 @@ public abstract class Sql {
         public Select from(Class<?>... classes) { for (Class<?> clazz : classes) from.append(clazz.getSimpleName()); return this; }
         public Select from(Query subquery, String name) { from.paramsList(subquery.params()).append("(" + subquery + ") AS " + name); return this; }
 
-        public Select join(String expr, Object... params) { join.params(params).localPrefix("JOIN ").separator(" JOIN ").append(expr); return this; }
-        public Select join(String table, Where on) { return join(table +" ON "+ on.toString(), on.paramsArray()); }
-        public Select innerJoin(String expr, Object... params) { join.params(params).localPrefix("INNER JOIN ").separator(" INNER JOIN ").append(expr); return this; }
-        public Select innerJoin(String table, Where on) { return innerJoin(table +" ON "+ on.toString(), on.paramsArray()); }
-        public Select leftJoin(String expr, Object... params) { join.params(params).localPrefix("LEFT JOIN ").separator(" LEFT JOIN ").append(expr); return this; }
-        public Select leftJoin(String table, Where on) { return leftJoin(table +" ON "+ on.toString(), on.paramsArray()); }
+        private Select _join(String prefix, String expr, Object... params) { join.params(params).localPrefix(prefix +" ").separator(" "+ prefix +" ").append(expr); return this; }
+        private Select _join(String prefix, String table, Where on) { return _join(prefix, table +" ON "+ on.toString(), on.paramsArray()); }
+        private Select _join(String prefix, Query subquery, String alias) { join.paramsList(subquery.params()); return _join(prefix, "("+ subquery +") AS "+ alias); }
+        private Select _join(String prefix, Query subquery, String alias, Where on) { join.paramsList(subquery.params()); return _join(prefix, "("+ subquery +") AS "+ alias, on); }
+        public Select join(JoinType joinType, String expr, Object... params) { return _join(joinType.value, expr, params); }
+        public Select join(JoinType joinType, String table, Where on) { return _join(joinType.value, table, on); }
+        public Select join(JoinType joinType, Query subquery, String alias) { return _join(joinType.value, subquery, alias); }
+        public Select join(JoinType joinType, Query subquery, String alias, Where on) { return _join(joinType.value, subquery, alias, on); }
+        public Select freeJoin(String prefix, String expr, Object... params) { return _join(prefix +" "+ JoinType.JOIN.value, expr, params); }
+        public Select freeJoin(String prefix, String table, Where on) { return _join(prefix +" "+ JoinType.JOIN.value, table, on ); }
+        public Select freeJoin(String prefix, Query subquery, String alias) { return _join(prefix +" "+ JoinType.JOIN.value, subquery, alias); }
+        public Select freeJoin(String prefix, Query subquery, String alias, Where on) { return _join(prefix +" "+ JoinType.JOIN.value, subquery, alias, on); }
+        public Select join(String expr, Object... params) { return join(JoinType.JOIN, expr, params); }
+        public Select join(String table, Where on) { return join(JoinType.JOIN, table, on); }
+        public Select join(Query subquery, String alias) { return join(JoinType.JOIN, subquery, alias); }
+        public Select join(Query subquery, String alias, Where on) { return join(JoinType.JOIN, subquery, alias, on); }
+        public Select innerJoin(String expr, Object... params) { return join(JoinType.INNER, expr, params); }
+        public Select innerJoin(String table, Where on) { return join(JoinType.INNER, table, on); }
+        public Select innerJoin(Query subquery, String alias) { return join(JoinType.INNER, subquery, alias); }
+        public Select innerJoin(Query subquery, String alias, Where on) { return join(JoinType.INNER, subquery, alias, on); }
+        public Select leftJoin(String expr, Object... params) { return join(JoinType.LEFT, expr, params); }
+        public Select leftJoin(String table, Where on) { return join(JoinType.LEFT, table, on); }
+        public Select leftJoin(Query subquery, String alias) { return join(JoinType.LEFT, subquery, alias); }
+        public Select leftJoin(Query subquery, String alias, Where on) { return join(JoinType.LEFT, subquery, alias, on); }
 
         public Select where(String expr, Object... params) { return andWhere(expr, params); }
         public Select where(Where expr) { return andWhere(expr); }
