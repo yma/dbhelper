@@ -174,6 +174,15 @@ public class SqlSelectTest {
     }
 
     @Test
+    public void fromAndJoinOrder() {
+        SqlTest.assertQuery(Sql.select().from("a").join("b").from("c").join("d"), "FROM a JOIN b, c JOIN d");
+        SqlTest.assertQuery(Sql.select().from(Sql.Select.class).join("b").from(Sql.Insert.class).join("d"), "FROM Select JOIN b, Insert JOIN d");
+        SqlTest.assertQuery(Sql.select().from("a").join("b").from("c", "d").join("e"), "FROM a JOIN b, c, d JOIN e");
+        SqlTest.assertQuery(Sql.select().from(Sql.Select.class).join("b").from(Sql.Insert.class, Sql.Update.class).join("d"), "FROM Select JOIN b, Insert, Update JOIN d");
+        SqlTest.assertQuery(Sql.select().from("a").join("b").from(Sql.select("x"), "c").join("d"), "FROM a JOIN b, (SELECT x) AS c JOIN d");
+    }
+
+    @Test
     public void where() {
         SqlTest.assertQuery(Sql.select().where("x", 1, 2, 3), "x", 1, 2, 3);
         SqlTest.assertQuery(Sql.select().where("x", 1, 2, 3).where("y", 4, 5, 6), "x AND y", 1, 2, 3, 4, 5, 6);

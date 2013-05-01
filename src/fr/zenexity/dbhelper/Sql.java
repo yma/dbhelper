@@ -353,7 +353,6 @@ public abstract class Sql {
     public static final class Select implements Query {
         private final Concat select;
         private final ConcatWithParams from;
-        private final ConcatWithParams join;
         public final Where where;
         private final Concat groupBy;
         public final Where having;
@@ -364,10 +363,8 @@ public abstract class Sql {
         public Select() {
             select = new Concat("SELECT ", ", ");
             select.defaultValue(null);
-            from = new ConcatWithParams("FROM ", ", ");
+            from = new ConcatWithParams("", null);
             from.defaultValue(null);
-            join = new ConcatWithParams("", null);
-            join.defaultValue(null);
             where = new Where();
             where.query.prefix("WHERE ").suffix("");
             groupBy = new Concat("GROUP BY ", ", ");
@@ -383,7 +380,6 @@ public abstract class Sql {
         public Select(Select src) {
             select = new Concat(src.select);
             from = new ConcatWithParams(src.from);
-            join = new ConcatWithParams(src.join);
             where = new Where(src.where);
             groupBy = new Concat(src.groupBy);
             having = new Where(src.having);
@@ -392,22 +388,24 @@ public abstract class Sql {
             limit = new Concat(src.limit);
         }
 
+        private ConcatWithParams _from() { from.localPrefix("FROM ").separator(", "); return from; }
+
         public Select all() { select.prefix = "SELECT ALL "; return this; }
         public Select distinct() { select.prefix = "SELECT DISTINCT "; return this; }
 
         public Select select(Object expression) { select.append(expression); return this; }
         public Select select(Object... expressions) { select.add(expressions); return this; }
 
-        public Select from(String table) { from.append(table); return this; }
-        public Select from(String... tables) { from.add((Object[])tables); return this; }
-        public Select from(Class<?> clazz) { from.append(clazz.getSimpleName()); return this; }
-        public Select from(Class<?>... classes) { for (Class<?> clazz : classes) from.append(clazz.getSimpleName()); return this; }
-        public Select from(Query subquery, String name) { from.paramsList(subquery.params()).append("(" + subquery + ") AS " + name); return this; }
+        public Select from(String table) { _from().append(table); return this; }
+        public Select from(String... tables) { _from().separator(", ").add((Object[])tables); return this; }
+        public Select from(Class<?> clazz) { _from().append(clazz.getSimpleName()); return this; }
+        public Select from(Class<?>... classes) { _from(); for (Class<?> clazz : classes) from.append(clazz.getSimpleName()); return this; }
+        public Select from(Query subquery, String name) { _from().paramsList(subquery.params()).append("(" + subquery + ") AS " + name); return this; }
 
-        private Select _join(String prefix, String expr, Object... params) { join.params(params).localPrefix(prefix +" ").separator(" "+ prefix +" ").append(expr); return this; }
+        private Select _join(String prefix, String expr, Object... params) { from.params(params).localPrefix(prefix +" ").separator(" "+ prefix +" ").append(expr); return this; }
         private Select _join(String prefix, String table, Where on) { return _join(prefix, table +" ON "+ on.toString(), on.paramsArray()); }
-        private Select _join(String prefix, Query subquery, String alias) { join.paramsList(subquery.params()); return _join(prefix, "("+ subquery +") AS "+ alias); }
-        private Select _join(String prefix, Query subquery, String alias, Where on) { join.paramsList(subquery.params()); return _join(prefix, "("+ subquery +") AS "+ alias, on); }
+        private Select _join(String prefix, Query subquery, String alias) { from.paramsList(subquery.params()); return _join(prefix, "("+ subquery +") AS "+ alias); }
+        private Select _join(String prefix, Query subquery, String alias, Where on) { from.paramsList(subquery.params()); return _join(prefix, "("+ subquery +") AS "+ alias, on); }
         public Select join(JoinType joinType, String expr, Object... params) { return _join(joinType.value, expr, params); }
         public Select join(JoinType joinType, String table, Where on) { return _join(joinType.value, table, on); }
         public Select join(JoinType joinType, Query subquery, String alias) { return _join(joinType.value, subquery, alias); }
@@ -455,11 +453,10 @@ public abstract class Sql {
 
         @Override
         public String toString() {
-            if (select.isEmpty() && from.isEmpty() && join.isEmpty()) where.query.prefix("");
+            if (select.isEmpty() && from.isEmpty()) where.query.prefix("");
             return new Concat(""," ").defaultValue(null)
                     .append(select)
                     .append(from)
-                    .append(join)
                     .append(where)
                     .append(groupBy)
                     .append(having)
@@ -476,11 +473,9 @@ public abstract class Sql {
         public List<Object> copyParams() {
             List<Object> list = new ArrayList<Object>(
                     from.params.size() +
-                    join.params.size() +
                     where.query.params.size() +
                     having.query.params.size());
             list.addAll(from.params);
-            list.addAll(join.params);
             list.addAll(where.query.params);
             list.addAll(having.query.params);
             return list;
