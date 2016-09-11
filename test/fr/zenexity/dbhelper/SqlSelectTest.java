@@ -10,6 +10,34 @@ import static org.junit.Assert.*;
 public class SqlSelectTest {
 
     @Test
+    public void withQuery() {
+        Sql.Select query = Sql
+            .with("table1", Sql.select("1").from("test1").andWhere("1 = 1"))
+            .select("*")
+            .from("toto")
+            .andWhere("3 = 3");
+        assertEquals("WITH table1 AS (SELECT 1 FROM test1 WHERE 1 = 1) SELECT * FROM toto WHERE 3 = 3", query.toString());
+
+        query.with("table2", Sql.select("2").from("test2").andWhere("2 = 2"));
+        assertEquals("WITH table1 AS (SELECT 1 FROM test1 WHERE 1 = 1), table2 AS (SELECT 2 FROM test2 WHERE 2 = 2) SELECT * FROM toto WHERE 3 = 3", query.toString());
+
+        query.with("table3", Sql.select("3").from("test3").andWhere("3 = 3"));
+        assertEquals("WITH table1 AS (SELECT 1 FROM test1 WHERE 1 = 1), table2 AS (SELECT 2 FROM test2 WHERE 2 = 2), table3 AS (SELECT 3 FROM test3 WHERE 3 = 3) SELECT * FROM toto WHERE 3 = 3", query.toString());
+    }
+
+    @Test
+    public void withUpdateQuery() {
+        Sql.Select query = Sql
+            .with("table1", Sql.insert("test1").set("a", 1))
+            .select("*")
+            .from("toto")
+            .andWhere("3 = 3");
+        SqlTest.assertQuery(query,
+            "WITH table1 AS (INSERT INTO test1 (a) VALUES (?)) SELECT * FROM toto WHERE 3 = 3",
+            1);
+    }
+
+    @Test
     public void selectNone() {
         assertEquals("", Sql.select().toString());
         assertEquals("", new Sql.Select().toString());
@@ -306,6 +334,16 @@ public class SqlSelectTest {
                     .leftJoin("e", 5, "e"),
                 "JOIN c INNER JOIN d LEFT JOIN e WHERE f OR g",
                 3, "c", 4, "d", 5, "e", 6, "f", 7, "g");
+    }
+
+    @Test
+    public void paramsWith() {
+        SqlTest.assertQuery(Sql
+                    .with("a", Sql.select().andWhere("x", 1, 2))
+                    .andWhere("c", 5, 6)
+                    .with("b", Sql.select().andWhere("y", 3, 4)),
+                "WITH a AS (x), b AS (y) c",
+                1, 2, 3, 4, 5, 6);
     }
 
     @Test

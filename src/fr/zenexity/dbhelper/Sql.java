@@ -351,6 +351,7 @@ public abstract class Sql {
     }
 
     public static final class Select implements Query {
+        private final ConcatWithParams with;
         private final Concat select;
         private final ConcatWithParams from;
         public final Where where;
@@ -361,6 +362,7 @@ public abstract class Sql {
         private final Concat limit;
 
         public Select() {
+            with = new ConcatWithParams("WITH ", ", ");
             select = new Concat("SELECT ", ", ");
             select.defaultValue(null);
             from = new ConcatWithParams("", null);
@@ -378,6 +380,7 @@ public abstract class Sql {
         }
 
         public Select(Select src) {
+            with = new ConcatWithParams(src.with);
             select = new Concat(src.select);
             from = new ConcatWithParams(src.from);
             where = new Where(src.where);
@@ -389,6 +392,9 @@ public abstract class Sql {
         }
 
         private ConcatWithParams _from() { from.localPrefix("FROM ").separator(", "); return from; }
+
+        public Select with(String table, Query subquery) { with.paramsList(subquery.params()).append(table + " AS (" + subquery + ")"); return this; }
+        public Select with(String table, UpdateQuery subquery) { with.paramsList(subquery.params()).append(table + " AS (" + subquery + ")"); return this; }
 
         public Select all() { select.prefix = "SELECT ALL "; return this; }
         public Select distinct() { select.prefix = "SELECT DISTINCT "; return this; }
@@ -455,6 +461,7 @@ public abstract class Sql {
         public String toString() {
             if (select.isEmpty() && from.isEmpty()) where.query.prefix("");
             return new Concat(""," ").defaultValue(null)
+                    .append(with)
                     .append(select)
                     .append(from)
                     .append(where)
@@ -472,9 +479,11 @@ public abstract class Sql {
 
         public List<Object> copyParams() {
             List<Object> list = new ArrayList<Object>(
+                    with.params.size() +
                     from.params.size() +
                     where.query.params.size() +
                     having.query.params.size());
+            list.addAll(with.params);
             list.addAll(from.params);
             list.addAll(where.query.params);
             list.addAll(having.query.params);
@@ -837,6 +846,8 @@ public abstract class Sql {
         }
     }
 
+    public static Select with(String table, Query subquery) { return new Select().with(table, subquery); }
+    public static Select with(String table, UpdateQuery subquery) { return new Select().with(table, subquery); }
     public static Select select() { return new Select(); }
     public static Select select(Object column) { return new Select().select(column); }
     public static Select select(Object... columns) { return new Select().select(columns); }
